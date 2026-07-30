@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SnakeIQ — WhatsApp bot review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600&family=Inter:wght@400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:#EEE9E0; font-family:Inter,system-ui,sans-serif; color:#11344F; display:flex; align-items:center; justify-content:center; padding:32px 20px; }
+  a { color:#447687; }
+  a:hover { color:#C94B30; }
+  main { width:100%; max-width:640px; }
+  h1 { font-family:Barlow,sans-serif; font-weight:600; font-size:30px; line-height:1.1; margin:8px 0 0; }
+  .eyebrow { font-family:'Roboto Mono',monospace; font-size:10.5px; letter-spacing:.12em; color:#C94B30; }
+  p.lede { font-size:14px; line-height:1.6; color:#4a5a63; margin:10px 0 0; max-width:56ch; }
+  .cards { display:grid; gap:12px; margin-top:26px; }
+  .card { display:flex; align-items:center; gap:14px; background:#fff; border-radius:12px; padding:16px 18px; text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+  .card:hover { box-shadow:0 4px 16px rgba(0,0,0,.12); }
+  .tag { flex:none; font-family:'Roboto Mono',monospace; font-weight:500; font-size:11px; letter-spacing:.06em; color:#fff; background:#11344F; border-radius:6px; padding:5px 9px; }
+  .tag.b { background:#447687; }
+  .tag.doc { background:#A0713F; }
+  .card h2 { font-family:Barlow,sans-serif; font-weight:600; font-size:17px; margin:0; color:#11344F; }
+  .card p { font-size:12.5px; line-height:1.5; color:#4a5a63; margin:3px 0 0; }
+  footer { margin-top:24px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.7; color:#6b7a82; }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">LACHESIS FOUNDATION &middot; SNAKEIQ</div>
+  <h1>WhatsApp emergency bot &mdash; review</h1>
+  <p class="lede">Two interactive prototypes of the same bot testing different navigation sequences, plus the flow specification. Everything runs in the browser; nothing is sent anywhere.</p>
+  <div class="cards">
+    <a class="card" href="bot-a.html">
+      <span class="tag">A</span>
+      <span>
+        <h2>Prototype A &mdash; triage first</h2>
+        <p>Location, time of bite and symptoms before identification. Tap the WhatsApp components; the right pane shows the payload emitted for each turn.</p>
+      </span>
+    </a>
+    <a class="card" href="bot-b.html">
+      <span class="tag b">B</span>
+      <span>
+        <h2>Prototype B &mdash; location first, then ID</h2>
+        <p>Identify the snake and find antivenom in the fewest turns; symptoms and time of bite are collected during travel.</p>
+      </span>
+    </a>
+    <a class="card" href="flow-spec.html">
+      <span class="tag doc">SPEC</span>
+      <span>
+        <h2>Conversation flow specification</h2>
+        <p>Per-turn content types, module seams, channel constraints and open review items. Print or save as PDF from your browser.</p>
+      </span>
+    </a>
+  </div>
+  <footer>Best viewed on a desktop browser &middot; draft for review, not clinically signed off<br><a href="../">&larr; back to the No-Photo ID prototypes</a></footer>
+</main>
+</body>
+</html>
