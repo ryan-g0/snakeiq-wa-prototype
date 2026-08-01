@@ -18,43 +18,51 @@
   .cards { display:grid; gap:12px; margin-top:26px; }
   .card { display:flex; align-items:center; gap:14px; background:#fff; border-radius:12px; padding:16px 18px; text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,.08); }
   .card:hover { box-shadow:0 4px 16px rgba(0,0,0,.12); }
-  .tag { flex:none; font-family:'Roboto Mono',monospace; font-weight:500; font-size:11px; letter-spacing:.06em; color:#fff; background:#11344F; border-radius:6px; padding:5px 9px; }
-  .tag.b { background:#447687; }
+  .tag { flex:none; font-family:'Roboto Mono',monospace; font-weight:500; font-size:11px; letter-spacing:.06em; color:#fff; background:#C94B30; border-radius:6px; padding:5px 9px; }
   .tag.doc { background:#A0713F; }
   .card h2 { font-family:Barlow,sans-serif; font-weight:600; font-size:17px; margin:0; color:#11344F; }
   .card p { font-size:12.5px; line-height:1.5; color:#4a5a63; margin:3px 0 0; }
-  footer { margin-top:24px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.7; color:#6b7a82; }
+  .look { margin-top:22px; border-top:1px solid #d9d1c4; padding-top:16px; }
+  .look h3 { font-family:'Roboto Mono',monospace; font-weight:500; font-size:10.5px; letter-spacing:.09em; color:#6b7a82; margin:0; text-transform:uppercase; }
+  .look ul { margin:10px 0 0; padding:0; list-style:none; display:grid; gap:7px; }
+  .look li { font-size:12.5px; line-height:1.5; color:#4a5a63; padding-left:14px; position:relative; }
+  .look li::before { content:""; position:absolute; left:0; top:7px; width:5px; height:5px; border-radius:50%; background:#447687; }
+  footer { margin-top:22px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.7; color:#6b7a82; }
 </style>
 </head>
 <body>
 <main>
   <div class="eyebrow">LACHESIS FOUNDATION &middot; SNAKEIQ</div>
   <h1>WhatsApp emergency bot &mdash; review</h1>
-  <p class="lede">Two interactive prototypes of the same bot testing different navigation sequences, plus the flow specification. Everything runs in the browser; nothing is sent anywhere.</p>
+  <p class="lede">An interactive prototype of the snakebite bot, plus the flow specification behind it. Everything runs in the browser; nothing is sent anywhere.</p>
   <div class="cards">
-    <a class="card" href="bot-a.html">
-      <span class="tag">A</span>
-      <span>
-        <h2>Prototype A &mdash; triage first</h2>
-        <p>Location, time of bite and symptoms before identification. Tap the WhatsApp components; the right pane shows the payload emitted for each turn.</p>
-      </span>
-    </a>
     <a class="card" href="bot-b.html">
-      <span class="tag b">B</span>
+      <span class="tag">BOT</span>
       <span>
-        <h2>Prototype B &mdash; location first, then ID</h2>
-        <p>Identify the snake and find antivenom in the fewest turns; symptoms and time of bite are collected during travel.</p>
+        <h2>Interactive prototype</h2>
+        <p>Tap the WhatsApp components to walk the flow. The right pane shows the Twilio content template emitted for each turn, with its channel limits checked.</p>
       </span>
     </a>
     <a class="card" href="flow-spec.html">
       <span class="tag doc">SPEC</span>
       <span>
         <h2>Conversation flow specification</h2>
-        <p>Per-turn content types, module seams, channel constraints and open review items. Print or save as PDF from your browser.</p>
+        <p>Every turn, its content type, the module seams, channel constraints and the open review items. Print or save as PDF from your browser.</p>
       </span>
     </a>
   </div>
-  <footer>Best viewed on a desktop browser &middot; draft for review, not clinically signed off<br><a href="../">&larr; back to the No-Photo ID prototypes</a></footer>
+  <div class="look">
+    <h3>Changed today &middot; 31 July 2026</h3>
+    <ul>
+      <li>The photo request now comes first. Location is asked once, while the image is being analysed, and never asked again.</li>
+      <li>The ID prompt is three options: take a photo, use an existing photo, or no photo &mdash; the snake is gone.</li>
+      <li>A non-venomous identification with a reported bite now runs a symptom screen. Any sign of envenoming overrides the identification and routes to a hospital; none routes to wound care.</li>
+      <li>Venom status is stated plainly &mdash; &ldquo;Venomous.&rdquo;, not &ldquo;Likely venomous.&rdquo; Doubt belongs to the identification, so it sits on the ID line and the match confidence.</li>
+      <li>Photo-match confidences reworked as one distribution (86 / 9 / 3 / 2%) rather than four separate scores.</li>
+      <li>Version A, the triage-first variant, has been dropped. The spec now covers this flow only.</li>
+    </ul>
+  </div>
+  <footer>Best viewed on a desktop browser &middot; draft for review, not clinically signed off</footer>
 </main>
 </body>
 </html>

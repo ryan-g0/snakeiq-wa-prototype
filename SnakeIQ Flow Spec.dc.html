@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/tokens/fig-tokens.css">
+  <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/styles.css">
+  <script src="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/_ds_bundle.js"></script>
+  <script src="./doc-page.js"></script>
+  <style>
+    doc-page:not(:defined) { visibility: hidden; }
+    a { color: #447687; }
+    a:hover { color: #C94B30; }
+    h1, h2, h3 { margin: 0; }
+    p { margin: 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align: left; vertical-align: top; padding: 7px 9px; border-bottom: 1px solid #e3ded4; font: 400 11.5px/1.45 Inter, sans-serif; color: #2c3d47; }
+    th { font: 700 9.5px/1.4 'Roboto Mono', monospace; letter-spacing: .07em; color: #6b7a82; border-bottom: 1px solid #b9c3c8; text-transform: uppercase; }
+    tr { break-inside: avoid; }
+  </style>
+</helmet>
+<doc-page margin="0.6in">
+
+  <div style="display:flex; align-items:flex-end; gap:16px; border-bottom:3px solid #11344F; padding-bottom:12px;">
+    <div style="flex:1;">
+      <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.12em; color:#C94B30;">SNAKEIQ · WHATSAPP EMERGENCY BOT</div>
+      <h1 style="font:600 30px/1.1 Barlow,sans-serif; color:#11344F; margin-top:6px; text-wrap:balance;">Conversation flow specification</h1>
+      <p style="font:400 13px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:6px; max-width:52ch;">Navigation sequence, per-turn Twilio content types, and module seam traffic. For developer review against the deployed bot.</p>
+    </div>
+    <div style="flex:none; text-align:right; font:400 11px/1.7 'Roboto Mono',monospace; color:#6b7a82;">
+      <div>Prototype B</div>
+      <div>Eswatini pilot</div>
+      <div>Draft for review</div>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:26px;">1 · How to read this</h2>
+  <p style="font:400 12.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:8px; max-width:78ch;">Every box is one bot turn and maps 1:1 to a Twilio Content API template. The mono code is the prototype state id; the right-hand chip is the content type plus its session class. Branch columns are the user's reply options. This is version B: identify first, collect the rest during travel. The earlier triage-first variant (A) has been dropped.</p>
+
+  <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px; break-inside:avoid;">
+    <div style="border:1px solid #d9d9d9; border-radius:8px; padding:10px 12px; background:#fff;">
+      <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.07em; color:#6b7a82;">SESSION CLASS</div>
+      <div style="font:400 11.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:5px;"><b>IS</b> — in-session, free-form, no approval. Valid only inside the 24-hour customer service window.<br><b>OOS</b> — out-of-session; requires a pre-approved template. Only the symptom-check alert is OOS.</div>
+    </div>
+    <div style="border:1px solid #d9d9d9; border-radius:8px; padding:10px 12px; background:#fff;">
+      <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.07em; color:#6b7a82;">COMPONENT CHOICE RULE</div>
+      <div style="font:400 11.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:5px;">≤ 3 options → quick-reply (title ≤ 25). 4–10 options → list-picker (row ≤ 24, description ≤ 72, button ≤ 20). Selection sets larger than 10, or any multi-select, are not native — see section 9.</div>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">2 · Entry</h2>
+
+  <div style="margin-top:12px;">
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">welcome</code>
+      <div style="flex:1; min-width:0;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Welcome menu</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">"I can identify a snake, guide first aid, and find antivenom near you."</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">quick-reply · IS</span>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+      <div style="border:1px solid #d9d9d9; border-radius:8px; padding:9px 11px; background:#fff; break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#C94B30;">SNAKE BITE</div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;">→ section 3</div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">The bite path goes straight to identification; location is requested once, while the photo is being analysed.</div>
+      </div>
+      <div style="border:1px solid #d9d9d9; border-radius:8px; padding:9px 11px; background:#fff; break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#C94B30;">SNAKE SPIT IN EYE</div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;"><code style="font-size:11px;">spit_firstaid</code> → <code style="font-size:11px;">spit_location</code> → <code style="font-size:11px;">hospital_eye</code> → <code style="font-size:11px;">eye_directions</code></div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">Irrigation instructions before anything else. No ID and no antivenom: treatment is identical for every species, so the species question is never asked. "Someone was bitten" re-enters the bite path.</div>
+      </div>
+      <div style="border:1px solid #d9d9d9; border-radius:8px; padding:9px 11px; background:#fff; break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#447687;">ID A SNAKE</div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;"><code style="font-size:11px;">id_prompt</code> → photo or <code style="font-size:11px;">no_photo</code></div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">No bite. Terminates at species info or a snake-catcher call, never at a hospital — <code style="font-size:11px;">no_photo</code> withholds the "skip for now, find antivenom" shortcut on this intent, so a person who was never bitten cannot reach the facility list or start the symptom-check timer. Location is asked only when a catcher is requested (<code style="font-size:11px;">loc_id</code>).</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">3 · Flow — ID first, then location, then antivenom</h2>
+  <p style="font:400 12.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:6px; max-width:78ch;">Rationale: the two irreversible facts — which snake, which facility — are established in the fewest possible turns, and the photo is asked for while the snake may still be in sight. Location is only needed to route to a facility, so it is asked once the image is already uploading and never blocks the identification. Symptoms and time of bite are collected while the victim is waiting for or in transport. Cost: no severity read before identification, and the module gets no syndromic prior.</p>
+
+  <div style="margin-top:12px;">
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">id_prompt</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Straight from <code style="font-size:12px;">welcome</code> to identification — see section 4</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">The bite path's opening: no location request, no time question, no symptom list, no pre-ID triage turn.</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">quick-reply · IS</span>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">loc_photo</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Location request, during photo analysis</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Fires the moment the image lands, replacing the "Analyzing the image…" filler: the wait becomes the turn that collects location. It also tells the module where the photo was taken, which narrows candidates by local range. Asked <b>once per session</b> — a retaken photo, a "find antivenom" tap or a snake-catcher request never re-asks. On the no-photo branch the request moves to whichever step first needs it (<code style="font-size:11px;">loc_bite</code> for care, <code style="font-size:11px;">loc_id</code> for a catcher).</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">location · IS</span>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="border:1px dashed #447687; border-radius:8px; background:rgba(68,118,135,.06); padding:10px 12px; break-inside:avoid;">
+      <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.07em; color:#447687;">DEFERRED TO THE SYMPTOM CHECK (SECTION 7)</div>
+      <div style="font:400 11.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:5px;">Time of bite runs after directions are on screen, as the first turn behind the alert's "OK". The symptom list is the consolidated checklist, asked once.</div>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">4 · Identification</h2>
+  <p style="font:400 12.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:6px; max-width:78ch;">The opening prompt offers the two photo routes first; everything else in this section follows from which of the three options was taken.</p>
+
+  <div style="margin-top:12px;">
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">id_prompt</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Identification method · three options</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">"Photo ID is the best way to see if a snake is venomous. Only take a photo if you can keep a safe distance."<br><b>Take a photo</b> · <b>Use existing photo</b> · <b>No photo, snake is gone</b>. Both photo options go straight to the upload — there is no intermediate "send a photo" turn. The distance warning lives in the body, not on a button, because the instruction that keeps someone safe must not be the thing that gets truncated at 25 characters.</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">quick-reply · IS</span>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+      <div style="border:1px solid #d9d9d9; border-radius:8px; padding:9px 11px; background:#fff; break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#447687;">PHOTO</div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;">upload → <code style="font-size:11px;">loc_photo</code> → <code style="font-size:11px;">species_results</code></div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">Vision match is <b>stubbed</b> in the prototype as a distribution, not four independent scores: 86/9/3/2%, summing to ~0.99 with the remainder across the other 57 species. Only the leader clears the 80% threshold, so the LOW CONFIDENCE chip carries the three alternates. Ranked carousel; confidence sits beside each common name.</div>
+      </div>
+      <div style="border:1px solid #d9d9d9; border-radius:8px; padding:9px 11px; background:#fff; break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#447687;">DESCRIPTION · VIA <code style="font-size:9.5px;">no_photo</code></div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;"><code style="font-size:11px;">idkey</code> loop → <code style="font-size:11px;">confirm</code> or <code style="font-size:11px;">species_results</code></div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">Module-driven adaptive key over 61 species. It picks each node by split gain, reweights on every answer, and stops at 0.85 confidence or five questions. Design renders whatever it is handed and never authors a question.</div>
+      </div>
+      <div style="border:1px solid #d9d9d9; border-radius:8px; padding:9px 11px; background:#fff; break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#6b7a82;">SKIP · VIA <code style="font-size:9.5px;">no_photo</code></div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;">→ <code style="font-size:11px;">loc_bite</code> → <code style="font-size:11px;">hospital</code></div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">Any-antivenom facility list, no species named. Location is collected here because this branch never uploaded a photo. Withheld entirely on the ID-only intent.</div>
+      </div>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:10px 12px; break-inside:avoid;">
+      <div style="font:600 13.5px/1.35 Barlow,sans-serif; color:#11344F;">Key presentation rules Design owns</div>
+      <div style="font:400 11.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:5px;">Colour rows carry a reference swatch; habitat rows a place glyph; markings a small sketch (nothing for "plain"); hood a cobra-hood glyph. Lengths spell out metres and the redundant list button is dropped. The first list also carries <b>"I know the species"</b> — typing a name short-circuits the key straight to the confirmation card. Illustrated lists reserve the icon slot on every row so labels share one left edge.</div>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #C94B30; border-radius:8px; background:rgba(201,75,48,.05); padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#C94B30; background:rgba(201,75,48,.1); border-radius:4px; padding:2px 6px;">confirm</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Species confirmation card</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Photo, common name, scientific name, venom status. Status is rendered <b>verbatim from the module's <code style="font-size:11px;">venomStatusLabel</code></b> — "Venomous." / "Venomous (rarely seen)." / "Mildly venomous." / "Non-venomous." Design does not soften or grade it: venom status is a fact about the species, not a probability. Any doubt belongs to the identification, so the hedge sits on the ID line ("Based on your photo." / "Based on your answers.") alongside match confidence and the LOW CONFIDENCE chip. Venomous species add an emphasised <b>SEEK CARE NOW</b> (sent as WhatsApp bold in the payload). Buttons branch on intent and venom status: venomous bite → first aid + antivenom; <b>non-venomous bite → symptom screen (section 6)</b>; spit → hospital; ID-only → more info / snake catcher / retake photo.</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">card · IS</span>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">5 · Post-ID first aid and antivenom</h2>
+  <div style="margin-top:12px;">
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">firstaid2</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Species-specific first aid</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Immobilisation wording is selected by the module's <code>firstAid</code> class — broad tourniquet (mamba) · pressure bandage · elevation with an explicit "no tourniquet" (cytotoxic) · limb still. Neurotoxic and mixed syndromes lead with <b>"You may become incapacitated. Get help now."</b></div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">text · IS</span>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">hospital</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Facility list · antivenom named</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">"Polyvalent antivenom is what a Mozambique Spitting Cobra bite needs." Product comes from Seam B; Design never decides it. Map header image above the rows. <b>Open:</b> stock and distance are hardcoded — they belong to a facility service (Seam C, not built).</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">list-picker · IS</span>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">hospital_directions</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Directions card · URL button</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Terminal turn: the maps button opens externally and emits nothing back. This is where the in-session flow ends and the timer starts.</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">card · URL · IS</span>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">6 · Non-venomous ID with a reported bite</h2>
+  <p style="font:400 12.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:6px; max-width:78ch;">A non-venomous ID does not close a bite case. The identification is a probability and the confirm card says so; the syndromic screen is the safety net that catches a wrong ID. Any positive sign overrides the identification and the case becomes a hospital case. The route is binary — Design scores nothing.</p>
+
+  <div style="margin-top:12px;">
+    <div style="display:flex; gap:10px; align-items:flex-start; border:1px solid #d9d9d9; border-radius:8px; background:#fff; padding:9px 11px; break-inside:avoid;">
+      <code style="flex:none; font:600 10.5px/1.6 'Roboto Mono',monospace; color:#11344F; background:rgba(17,52,79,.07); border-radius:4px; padding:2px 6px;">nv_symptoms</code>
+      <div style="flex:1;">
+        <div style="font:600 14px/1.35 Barlow,sans-serif; color:#11344F;">Syndromic screen · multi-select</div>
+        <div style="font:400 12px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:2px;">"A Southern African Python bite is not venomous, but an ID can be wrong. Which of these are happening now?" Six envenoming indicators: spreading swelling · severe or worsening pain · bleeding that will not stop · drooping eyelids or blurred vision · numbness, tingling or dizziness · trouble breathing or swallowing. Multi-select is emulated — WhatsApp lists are single-select.</div>
+      </div>
+      <span style="flex:none; font:600 9.5px/1.4 'Roboto Mono',monospace; color:#447687; background:rgba(68,118,135,.1); border-radius:4px; padding:4px 7px;">list-picker · IS</span>
+    </div>
+    <div style="width:2px; height:14px; background:#cfd6d9; margin-left:28px;"></div>
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;">
+      <div style="border:1px solid #C94B30; border-radius:8px; padding:9px 11px; background:rgba(201,75,48,.05); break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#C94B30;">ANY POSITIVE SIGN</div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;"><code style="font-size:11px;">nv_positive</code> → <code style="font-size:11px;">hospital</code></div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">"What you describe can be a sign of envenoming. The ID may be wrong — treat this as a venomous bite." Then keep-still first aid and the facility list. Saying the ID may be wrong is the point: hedging here would read as reassurance.</div>
+      </div>
+      <div style="border:1px solid #d9d9d9; border-radius:8px; padding:9px 11px; background:#fff; break-inside:avoid;">
+        <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:#447687;">NONE OF THESE</div>
+        <div style="font:600 13px/1.35 Barlow,sans-serif; color:#11344F; margin-top:4px;"><code style="font-size:11px;">nv_wound_care</code></div>
+        <div style="font:400 11.5px/1.5 Inter,sans-serif; color:#4a5a63; margin-top:3px;">Wash · dress · watch for infection · tetanus shot. Terminal but <b>re-enterable</b>: "Symptoms have started" runs the screen again, because envenoming can declare itself hours later.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">7 · Symptom check sequence (S-0 → T-1)</h2>
+  <p style="font:400 12.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:6px; max-width:78ch;">Fires out of session after directions, on the species' own <code>alertIntervalMin</code> (mamba 10 min, spitting cobra 30). Body: <b>"It's time to check your symptoms, can you answer a few questions?"</b> — static text, so one approved template covers every species.</p>
+
+  <table style="margin-top:12px;">
+    <thead><tr><th style="width:118px;">State</th><th>Turn</th><th style="width:120px;">Component</th></tr></thead>
+    <tbody>
+      <tr><td><code>symptom_alert</code></td><td>Alert. OK → time of bite. "Not now" ends the sequence with "I'll check back with you later."</td><td>quick-reply template · <b>OOS</b></td></tr>
+      <tr><td><code>bite_time</code></td><td>The deferred time question, asked here.</td><td>text · IS</td></tr>
+      <tr><td><code>sc_enroute</code></td><td>Still travelling to the named hospital? → continue · different hospital → <code>sc_hosp_list</code> (or free-text name → confirm card) · plans changed → <code>sc_edge</code>.</td><td>quick-reply · IS</td></tr>
+      <tr><td><code>sc_edge</code></td><td>False alarm (cancels the pre-alert) · treating at home (harm-reduction turn, then standby + red flags) · other (free text, hands to a responder).</td><td>list-picker · IS</td></tr>
+      <tr><td><code>sc_symptoms</code></td><td>Consolidated checklist in two labelled groups: <b>what you feel</b> (victim, conscious) and <b>what you see</b> (bystander). Pain row is species-conditional off <code>syndromeClass</code> — "pain spreading up limb" for cytotoxic, generic otherwise, because mamba bites are often near-painless. Any neuro item raises the neuro flag.</td><td>emulated multi-select · IS</td></tr>
+      <tr><td><code>sc_meds</code></td><td>Medications or herbal remedies since the bite? Yes → name them (free text) → do-not-take-more warning. No → straight on.</td><td>quick-reply · IS</td></tr>
+      <tr><td><code>sc_swelling</code></td><td>Has swelling increased? The answer gates the marking step below.</td><td>quick-reply · IS</td></tr>
+      <tr><td><code>sc_neuro</code></td><td><b>Conditional</b> (neuro flag). Recovery position, nothing by mouth, be ready to support breathing, and a limb line that follows the module's <code>firstAid</code> class. Re-sends the pre-alert flagged as neurotoxic progression so the facility readies antivenom and an intubation kit.</td><td>text · IS</td></tr>
+      <tr><td><code>sc_mark</code></td><td><b>Only when swelling was reported.</b> Draw and time the swelling edge, then photograph the bite site. Site copy follows the syndrome: pinpoint-or-invisible puncture for neurotoxic, swelling edge for cytotoxic.</td><td>text + quick-reply · IS</td></tr>
+      <tr><td><code>sc_terminal</code></td><td>T-1. Four persistent actions — bite information (shareable card), treatment protocol, checked into ER, find a different hospital. Reads as a close, not a prompt: the MENU affordance sits above the rows and nothing is required of the victim.</td><td>list-picker · IS</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">8 · Module seams</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+    <div style="border:1px solid #447687; border-radius:8px; background:rgba(68,118,135,.05); padding:11px 13px; break-inside:avoid;">
+      <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.07em; color:#447687;">↗ SEAM A · DESIGN → ID MODULE</div>
+      <div style="font:400 11.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:6px;">Emitted when the description path opens, re-sent with each answer. Carries session, channel, entry point, victim ("self" — the bot no longer asks, since no copy branched on it), location, and <code>syndromicPriors</code>: primary symptom plus the time-of-bite <b>bucket id</b>, never a collapsed minute count. The whole object is omitted when triage never ran — which is the normal case in version B.</div>
+    </div>
+    <div style="border:1px solid #447687; border-radius:8px; background:rgba(68,118,135,.05); padding:11px 13px; break-inside:avoid;">
+      <div style="font:700 9.5px/1.4 'Roboto Mono',monospace; letter-spacing:.07em; color:#447687;">↙ SEAM B · ID MODULE → DESIGN</div>
+      <div style="font:400 11.5px/1.6 Inter,sans-serif; color:#2c3d47; margin-top:6px;">Ranked candidates with confidence, venom status and label, syndrome class, antivenom product, <code>alertIntervalMin</code> and <code>cadenceBasis</code>, <code>firstAid</code> class, care level, tier, notes, and <code>firstCheckDueMin</code>. Design renders these unchanged. <b>Design must not</b> implement ranking, symptom→syndrome mapping, alert cadence, or any clinical value.</div>
+    </div>
+  </div>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">9 · Channel constraints that shaped the flow</h2>
+  <table style="margin-top:10px;">
+    <thead><tr><th style="width:150px;">Constraint</th><th>Consequence in this spec</th></tr></thead>
+    <tbody>
+      <tr><td>No multi-select list</td><td>The symptom checklist is not native. Ship it as the two sequential single-select lists in section 7, an accumulating list with a "Done" row, or a deep link into the app. The prototype shows the intended UX.</td></tr>
+      <tr><td>10 rows per list</td><td>Symptom groups are capped at five rows each; the terminal menu is exactly four.</td></tr>
+      <tr><td>No date/time picker</td><td>Time of bite is a text turn anchored on the session clock, parsed to the minute server-side.</td></tr>
+      <tr><td>Carousel text is static</td><td>The ranked candidate set and every confidence % must be pre-built server-side once the module returns, then baked into the card bodies.</td></tr>
+      <tr><td>3 quick-reply buttons, 25 chars</td><td>Any turn with four or more options — plans changed, terminal menu — is a list-picker instead, one tap deeper.</td></tr>
+      <tr><td>24-hour session window</td><td>Only the symptom-check alert is out of session and needs approval. Everything after it rides the reopened session.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="font:600 17px/1.2 Barlow,sans-serif; color:#11344F; margin-top:28px;">10 · Open for review</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+    <div style="border-left:3px solid #C94B30; padding:2px 0 2px 11px; break-inside:avoid;"><div style="font:600 12.5px/1.4 Barlow,sans-serif; color:#11344F;">Clinical sign-off</div><div style="font:400 11.5px/1.55 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Immobilisation sentences, the S-7 neuro instructions, and the six key symptom nodes all follow the Eswatini 2021 guidance but are unsigned.</div></div>
+    <div style="border-left:3px solid #C94B30; padding:2px 0 2px 11px; break-inside:avoid;"><div style="font:600 12.5px/1.4 Barlow,sans-serif; color:#11344F;">Vision model</div><div style="font:400 11.5px/1.55 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Photo confidences are hardcoded. The real path needs the model's ranked output and a policy for low-confidence sets.</div></div>
+    <div style="border-left:3px solid #447687; padding:2px 0 2px 11px; break-inside:avoid;"><div style="font:600 12.5px/1.4 Barlow,sans-serif; color:#11344F;">Facility service (Seam C)</div><div style="font:400 11.5px/1.55 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Distance, travel time, vial counts and phone numbers are static. Needs a location query emitting real stock.</div></div>
+    <div style="border-left:3px solid #447687; padding:2px 0 2px 11px; break-inside:avoid;"><div style="font:600 12.5px/1.4 Barlow,sans-serif; color:#11344F;">Time buckets</div><div style="font:400 11.5px/1.55 Inter,sans-serif; color:#4a5a63; margin-top:2px;">Bites older than six hours collapse into one bucket, and a bite before midnight cannot be entered at all.</div></div>
+    <div style="border-left:3px solid #447687; padding:2px 0 2px 11px; break-inside:avoid;"><div style="font:600 12.5px/1.4 Barlow,sans-serif; color:#11344F;">Unresponsive victim</div><div style="font:400 11.5px/1.55 Inter,sans-serif; color:#4a5a63; margin-top:2px;">The flow has no path for a victim who stops answering mid-sequence.</div></div>
+  </div>
+
+  <div style="margin-top:26px; padding-top:10px; border-top:1px solid #d9d9d9; font:400 10.5px/1.5 'Roboto Mono',monospace; color:#6b7a82;">Prototype: SnakeIQ WhatsApp Bot vB · engine: snakeiq-id-module.js over species.csv (61 species) · contract: SnakeIQ-ID-Module-Interface-Spec.md</div>
+
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals(){ return {}; }
+}
+</script>
+</body>
+</html>
