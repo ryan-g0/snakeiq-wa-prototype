@@ -44,6 +44,13 @@
         <p>Tap the WhatsApp components to walk the flow. The right pane shows the Twilio content template emitted for each turn, with its channel limits checked.</p>
       </span>
     </a>
+    <a class="card" href="bot-b-testkit.html">
+      <span class="tag">TESTKIT</span>
+      <span>
+        <h2>Field-test build</h2>
+        <p>Same flow, wired to the handset: &ldquo;Take a photo&rdquo; opens the real camera and the picture comes back into the thread, &ldquo;Send current location&rdquo; uses real GPS, and hospital distances are computed from where you actually are. Open it on a phone &mdash; it fills the screen and hides the inspector.</p>
+      </span>
+    </a>
     <a class="card" href="flow-spec.html">
       <span class="tag doc">SPEC</span>
       <span>
@@ -55,6 +62,7 @@
   <div class="look">
     <h3>Changed today &middot; 2 August 2026</h3>
     <ul>
+      <li><b>Testkit build added</b> for field testing: real camera capture, real GPS, distances computed from the live fix, working Google Maps directions links, and a full-screen phone layout with the inspector hidden. The design-review build is unchanged.</li>
       <li>Region moved from Eswatini to the <b>Mpumalanga lowveld, South Africa</b>: Mbombela as the shared location, Rob Ferreira and Themba hospitals, Mediclinic Nelspruit for eye care, SA dialling codes and local place names in the picker. The module&rsquo;s clinical fields still cite the Eswatini 2021 guidelines &mdash; that citation needs a South African replacement before the pilot.</li>
       <li>&ldquo;Pick a different spot&rdquo; now opens WhatsApp&rsquo;s own location picker &mdash; map with a draggable pin, search, and nearby places. The bot cannot render a pannable map inside a message, so the sheet is the client&rsquo;s; either route returns one inbound location message.</li>
       <li>The <b>no photo &rarr; hospital</b> variant is consolidated into the main prototype and retired. Its hospital instruction and keep-still first aid are now <b>First aid 1</b>: the turn that fires the moment a bite is reported, before any identification, because treatment does not wait for a species.</li>
