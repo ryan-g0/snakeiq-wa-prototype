@@ -30,6 +30,18 @@
   .look li::before { content:""; position:absolute; left:0; top:7px; width:5px; height:5px; border-radius:50%; background:#447687; }
   footer { margin-top:22px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.7; color:#6b7a82; }
 </style>
+<script>
+/* Offline field use: the page caches itself on first load over the network, then runs with
+   no signal at all — still on https, so geolocation and camera stay available (a file://
+   copy loses both). The manifest and apple meta are added at runtime so the offline
+   bundler leaves their URLs alone. */
+(function(){
+  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
+  [["apple-mobile-web-app-capable","yes"],["apple-mobile-web-app-status-bar-style","black-translucent"],["theme-color","#11344F"]]
+    .forEach(function(p){ var m = document.createElement("meta"); m.name = p[0]; m.content = p[1]; document.head.appendChild(m); });
+  if ("serviceWorker" in navigator) window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+})();
+</script>
 </head>
 <body>
 <main>
