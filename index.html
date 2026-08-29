@@ -37,17 +37,31 @@
   <h1>WhatsApp emergency bot &mdash; review</h1>
   <p class="lede">The interactive prototype of the snakebite bot, plus the flow specification behind it. Everything runs in the browser; nothing is sent anywhere.</p>
   <div class="cards">
+    <a class="card" href="bot-c.html">
+      <span class="tag">BOT &middot; C</span>
+      <span>
+        <h2>Interactive prototype &mdash; Western Cape</h2>
+        <p>The current build. Same flow, localised to the Overberg: Swellendam Provincial and Otto du Plessis hospitals, local antivenom stock and place names, and the victim / bystander split in the symptom check.</p>
+      </span>
+    </a>
+    <a class="card" href="bot-c-testkit.html">
+      <span class="tag">TESTKIT &middot; C</span>
+      <span>
+        <h2>Field-test build &mdash; Western Cape</h2>
+        <p>The Western Cape flow on the field-test harness: participant ID, timestamped session log with CSV and Audacity label export, real camera and GPS, and the part&nbsp;1 / part&nbsp;2 break at &ldquo;Open in Google Maps&rdquo;.</p>
+      </span>
+    </a>
     <a class="card" href="bot-b.html">
       <span class="tag">BOT</span>
       <span>
-        <h2>Interactive prototype</h2>
+        <h2>Interactive prototype &mdash; Mpumalanga (previous)</h2>
         <p>Tap the WhatsApp components to walk the flow. The right pane shows the Twilio content template emitted for each turn, with its channel limits checked.</p>
       </span>
     </a>
     <a class="card" href="bot-b-testkit.html">
       <span class="tag">TESTKIT</span>
       <span>
-        <h2>Field-test build</h2>
+        <h2>Field-test build &mdash; Mpumalanga (previous)</h2>
         <p>Same flow, wired to the handset: &ldquo;Take a photo&rdquo; opens the real camera and the picture comes back into the thread, &ldquo;Send current location&rdquo; uses real GPS, and hospital distances are computed from where you actually are. Open it on a phone &mdash; it fills the screen and hides the inspector.</p>
       </span>
     </a>
@@ -60,7 +74,14 @@
     </a>
   </div>
   <div class="look">
-    <h3>Changed today &middot; 2 August 2026</h3>
+    <h3>Changed today &middot; 29 August 2026</h3>
+    <ul>
+      <li><b>Western Cape build (C)</b> added, in both review and field-test form. Location anchor is Swellendam; hospitals are Swellendam Provincial (18 Drostdy Street) and Otto du Plessis in Bredasdorp, both government facilities, with Mediclinic Worcester for eye care.</li>
+      <li>The symptom check now opens with <b>&ldquo;Are you the victim?&rdquo;</b> &mdash; the answer decides whether the checklist asks what you <i>feel</i> or what you <i>see</i>, and sets the wording of every later question.</li>
+      <li>First aid 1 is titled <b>To Do:</b> and no longer tells anyone not to wait for an identification; the ID prompt now leads with &ldquo;#1 priority is to get to the hospital, but if you can ID the snake, it will help your treatment.&rdquo;</li>
+      <li>The swelling check carries an <b>illustration</b> of the marked limb, between the title and the instruction.</li>
+    </ul>
+    <h3 style="margin-top:16px;">Changed 2 August 2026</h3>
     <ul>
       <li><b>Testkit build added</b> for field testing: real camera capture, real GPS, distances computed from the live fix, working Google Maps directions links, and a full-screen phone layout with the inspector hidden. The design-review build is unchanged.</li>
       <li>Region moved from Eswatini to the <b>Mpumalanga lowveld, South Africa</b>: Mbombela as the shared location, Rob Ferreira and Themba hospitals, Mediclinic Nelspruit for eye care, SA dialling codes and local place names in the picker. The module&rsquo;s clinical fields still cite the Eswatini 2021 guidelines &mdash; that citation needs a South African replacement before the pilot.</li>
