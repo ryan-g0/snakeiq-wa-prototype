@@ -1,4 +1,4 @@
-const CACHE = "snakeiq-vc-2026-08-30d";
+const CACHE = "snakeiq-vc-2026-08-30e";
 
 const PRECACHE = [
   "./",
@@ -46,7 +46,26 @@ self.addEventListener("fetch", (e) => {
   const isCdn = CDN.indexOf(url.href) >= 0;
   if (!sameOrigin && !isCdn) return;
 
+  // Pages are network-first: with signal the phone always gets the copy that is actually
+  // on the server, and the cache is the offline fallback. Cache-first here is what left a
+  // field phone running a build from hours earlier with no way to tell.
+  const isPage = sameOrigin && (req.mode === "navigate" || url.pathname.endsWith(".html") ||
+                                url.pathname.endsWith("/") || url.pathname.endsWith("sw.js"));
+
   e.respondWith((async () => {
+    if (isPage){
+      try {
+        const fresh = await fetch(req, { cache: "no-store" });
+        if (fresh && fresh.ok){
+          const c = await caches.open(CACHE);
+          c.put(req, fresh.clone());
+          return fresh;
+        }
+      } catch (err) { /* offline — fall through to the cached copy below */ }
+      const hit = await caches.match(req, { ignoreSearch: true });
+      if (hit) return hit;
+    }
+
     const cached = await caches.match(req, { ignoreSearch: true });
     if (cached) return cached;
     try {
