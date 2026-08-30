@@ -1,4 +1,4 @@
-const CACHE = "snakeiq-vc-2026-08-30a";
+const CACHE = "snakeiq-vc-2026-08-30d";
 
 const PRECACHE = [
   "./",
