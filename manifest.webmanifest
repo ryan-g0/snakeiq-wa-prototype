@@ -1,15 +1,25 @@
 {
   "name": "SnakeIQ Field Testkit",
   "short_name": "SnakeIQ",
-  "description": "SnakeIQ WhatsApp bot prototype and field-test build — Western Cape.",
-  "start_url": "bot-c-testkit.html",
+  "description": "SnakeIQ WhatsApp bot field-test build — Western Cape.",
+  "start_url": "testkit.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#11344F",
   "theme_color": "#11344F",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

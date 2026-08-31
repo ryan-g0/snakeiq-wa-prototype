@@ -12,12 +12,20 @@
 <meta name="ext-resource-dependency" content="assets/maps/swellendam.png" data-resource-id="mapSwellendam" />
 <meta name="ext-resource-dependency" content="assets/swelling-mark-illustration.png" data-resource-id="swellingMark" />
 <script>
-/* Home Screen behaviour only. No service worker in this build: a cache-first worker is
-   what made three builds in a row unverifiable on the phone, so while the flow is still
-   moving the page always comes from the network. */
+/* Home Screen + offline field use. The page is served over https, so GPS and camera keep
+   working with no signal; a file:// copy loses both. Pages come from the network whenever
+   there IS signal (see sw.js), so an upload is never shadowed by a cached build. */
 (function(){
+  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
   [["apple-mobile-web-app-capable","yes"],["apple-mobile-web-app-status-bar-style","black-translucent"],["theme-color","#11344F"]]
     .forEach(function(p){ var m = document.createElement("meta"); m.name = p[0]; m.content = p[1]; document.head.appendChild(m); });
+  if ("serviceWorker" in navigator) window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").then(function(reg){
+      // Ask the server on every load; the new copy is picked up on the NEXT load, never by
+      // reloading mid-session (that read as dead buttons — a tap answered by a restart).
+      reg.update().catch(function(){});
+    }).catch(function(){});
+  });
 })();
 </script>
 <script src="./support.js"></script>
@@ -169,7 +177,7 @@
         <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
             <div style="display:flex; flex-direction:column; gap:7px;">
-              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 35 &middot; WEB</div>
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 36 &middot; OFFLINE</div>
               <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
               <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
             </div>
