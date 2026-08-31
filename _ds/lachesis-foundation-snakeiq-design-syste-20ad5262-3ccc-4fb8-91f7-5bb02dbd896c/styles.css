@@ -1,0 +1,16 @@
+/* Lachesis Foundation / SnakeIQ — Design System global CSS entry point.
+   Consumers link THIS file. It is a list of @imports only. */
+
+/* Webfonts (Google Fonts; Alverata→Spectral, Balboa→Oswald substitutes) */
+@import './tokens/fonts.css';
+
+/* Design tokens — 651 Figma Variables across all collections & theme modes */
+@import './tokens/fig-tokens.css';
+
+/* Text/effect styles (the source defines none as reusable styles) */
+@import './tokens/fig-typography.css';
+
+/* Bitmap assets baked into components (nav logo, carousel, location imagery) */
+@import './components/navigation/fig-assets.css';
+@import './components/media/fig-assets.css';
+@import './components/bottom-sheet/fig-assets.css';

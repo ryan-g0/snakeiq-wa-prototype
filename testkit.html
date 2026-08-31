@@ -1,0 +1,2741 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ext-resource-dependency" content="assets/snake-photo-wide.jpg" data-resource-id="snakePhoto" />
+<meta name="ext-resource-dependency" content="assets/species/mamba_black.jpg" data-resource-id="sp_mambaBlack" />
+<meta name="ext-resource-dependency" content="assets/species/cobra_mozam.jpg" data-resource-id="sp_cobraMozam" />
+<meta name="ext-resource-dependency" content="assets/species/grass_olive.jpg" data-resource-id="sp_grassOlive" />
+<meta name="ext-resource-dependency" content="assets/species/mole.jpg" data-resource-id="sp_mole" />
+<meta name="ext-resource-dependency" content="assets/species/tiger_eastern.jpg" data-resource-id="sp_tigerEastern" />
+<meta name="ext-resource-dependency" content="assets/maps/swellendam.png" data-resource-id="mapSwellendam" />
+<meta name="ext-resource-dependency" content="assets/swelling-mark-illustration.png" data-resource-id="swellingMark" />
+<script>
+/* Home Screen behaviour only. No service worker in this build: a cache-first worker is
+   what made three builds in a row unverifiable on the phone, so while the flow is still
+   moving the page always comes from the network. */
+(function(){
+  [["apple-mobile-web-app-capable","yes"],["apple-mobile-web-app-status-bar-style","black-translucent"],["theme-color","#11344F"]]
+    .forEach(function(p){ var m = document.createElement("meta"); m.name = p[0]; m.content = p[1]; document.head.appendChild(m); });
+})();
+</script>
+<script src="./support.js"></script>
+</head>
+
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="fonts-testkit.css">
+  <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/tokens/fig-tokens.css">
+  <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/styles.css">
+  <script src="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/_ds_bundle.js"></script>
+  <script src="snakeiq-id-module.js"></script>
+  <script src="snakeiq-af.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #d7cfc3; font-family: Inter, system-ui, sans-serif; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    #wa-scroll::-webkit-scrollbar { width: 5px; }
+    #wa-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 3px; }
+    .ins-scroll::-webkit-scrollbar { width: 8px; }
+    .ins-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
+    .wa-btn:active { background: #f2efe8 !important; }
+    .wa-row:active { background: rgba(0,0,0,.04) !important; }
+    /* Taps, not gestures: no double-tap-zoom delay, and every chat control clears the
+       44px minimum target even where the label is short. */
+    .wa-btn, .wa-row, button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    @media (max-width: 900px) { .wa-btn, .wa-row { min-height: 44px !important; } }
+    #wa-input:focus { outline: none; }
+    input::placeholder { color: #8696a0; }
+    /* Field-test layout: on a real handset the prototype fills the screen and the
+       inspector, bezel and simulated status bar get out of the way. */
+    @media (max-width: 900px) {
+      /* The handset owns the viewport: nothing scrolls the page, so Safari cannot push the
+         top of the chat off screen. The frame is taken out of flow entirely rather than
+         sized in vh \u2014 100vh lies about the visible area while the toolbars are showing. */
+      /* Body itself is taken out of flow: iOS cannot rubber-band or pan a fixed root, so
+         the frame stops drifting when the toolbars collapse. */
+      html, body { margin: 0 !important; height: 100% !important; overflow: hidden !important; overscroll-behavior: none !important; position: fixed !important; inset: 0 !important; width: 100% !important; touch-action: pan-y; -webkit-text-size-adjust: 100%; }
+      #tk-wrap { display: block !important; width: 100% !important; min-height: 0 !important; height: 100% !important; padding: 0 !important; }
+      #tk-phone { width: 100% !important; gap: 0 !important; }
+      /* Frame background matches the session strip, so any band the browser's own toolbar
+         leaves behind reads as part of the UI instead of a black bezel. */
+      /* Pinned to the VISUAL viewport (set by script below), not the layout viewport —
+         the layout viewport is what shifts under Safari's collapsing toolbars. */
+      #tk-frame { position: fixed !important; left: 0 !important; right: 0 !important; top: var(--tk-top, 0px) !important; bottom: auto !important; height: var(--tk-h, 100dvh) !important; width: auto !important; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; background: #11344F !important; }
+      /* Safe areas: the notch pads the top, the home indicator the bottom, so no control
+         sits under either and no dead band is left below the session strip. */
+      /* The status-bar band is a flex SPACER, not padding: padding shrank the content box
+         and left a strip of the screen's own beige showing below the composer. */
+      #tk-screen { border-radius: 0 !important; box-sizing: border-box !important; height: 100% !important; min-height: 100% !important; padding-top: 0 !important; background: #f6f6f6 !important; }
+      #tk-screen::before { content: "" !important; display: block !important; flex: none !important; height: max(env(safe-area-inset-top), var(--tk-minsafe, 0px)) !important; background: #f6f6f6 !important; }
+      #tk-strip { padding-bottom: calc(9px + env(safe-area-inset-bottom)) !important; }
+      #tk-composer { padding-bottom: calc(9px + env(safe-area-inset-bottom)) !important; }
+      #tk-strip ~ #tk-composer, #tk-composer:has(~ #tk-strip) { padding-bottom: 9px !important; }
+      #tk-notch, #tk-status, #tk-caption, #tk-ins { display: none !important; }
+    }
+  </style>
+  <script>
+  (function(){
+    // 1. No pinch/double-tap zoom: a zoomed-in visual viewport is the other way the
+    //    prototype "slides around" under the thumb during a field test.
+    var mv = document.querySelector('meta[name="viewport"]');
+    if (mv) mv.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+    document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, { passive:false });
+
+    // 2. Track the visual viewport so the frame is exactly as tall as what is really
+    //    visible, and sits exactly where it really starts.
+    var vv = window.visualViewport;
+    function sync(){
+      var h = vv ? vv.height : window.innerHeight;
+      var t = vv ? vv.offsetTop : 0;
+      var r = document.documentElement.style;
+      r.setProperty('--tk-h', h + 'px');
+      r.setProperty('--tk-top', t + 'px');
+    }
+    // 2b. Status-bar band. env(safe-area-inset-top) reports 0 in some full-screen web
+    //    contexts, which lets the clock/battery row paint straight on top of the chat
+    //    header. CSS takes the larger of the real inset and this floor, so when the page
+    //    genuinely owns the top of the screen the header still starts below the status
+    //    bar, the way a real WhatsApp thread does.
+    function minSafeTop(){
+      var owns_top = window.navigator.standalone === true ||
+                    window.matchMedia('(display-mode: standalone)').matches ||
+                    window.matchMedia('(display-mode: fullscreen)').matches ||
+                    (window.screen && window.innerHeight >= window.screen.height - 24);
+      if (!owns_top) return 0;
+      var notched = window.screen && Math.max(window.screen.width, window.screen.height) >= 812;
+      return notched ? 47 : 20;
+    }
+
+    var _sync = sync;
+    sync = function(){
+      _sync();
+      document.documentElement.style.setProperty('--tk-minsafe', minSafeTop() + 'px');
+    };
+
+    if (vv){ vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); }
+    window.addEventListener('orientationchange', function(){ setTimeout(sync, 250); });
+    sync();
+
+    // 3. Any drag that is not inside a scrollable list is swallowed, so the page
+    //    never rubber-bands behind the frame. A tap is never a drag: finger jitter under
+    //    ~10px is left alone, because cancelling those touchmoves is what stopped iOS
+    //    from synthesising the click on reply buttons.
+    var t_start = null;
+    document.addEventListener('touchstart', function(e){
+      var t = e.touches[0];
+      t_start = t ? { x:t.clientX, y:t.clientY, el:e.target, t:Date.now() } : null;
+    }, { passive:true });
+
+    document.addEventListener('touchmove', function(e){
+      if (window.innerWidth > 900) return;
+      var t = e.touches[0];
+      if (t_start && t && Math.abs(t.clientX - t_start.x) < 10 && Math.abs(t.clientY - t_start.y) < 10) return;
+      // A drag that began on a control is the finger settling, not a scroll: leave it be,
+      // or cancelling it takes the click with it.
+      if (t_start && t_start.el && t_start.el.closest && t_start.el.closest(TAPPABLE)) return;
+      var n = e.target;
+      while (n && n !== document.body){
+        if (n.scrollHeight > n.clientHeight + 1){
+          var s = getComputedStyle(n).overflowY;
+          if (s === 'auto' || s === 'scroll') return;
+        }
+        n = n.parentNode;
+      }
+      if (e.cancelable) e.preventDefault();
+    }, { passive:false });
+
+    // Every control a finger is meant to hit. The chat's reply buttons and list rows are
+    // divs, the testkit's own controls are real buttons — iOS withholds the synthetic
+    // click on both in this full-screen context, so both go through the same fallback.
+    var TAPPABLE = '.wa-btn, .wa-row, button, [role="button"], label[for]';
+
+    // 4. Tap fallback. In the full-screen field build iOS intermittently withholds the
+    //    synthetic click on the chat's reply buttons and list rows, which reads as a dead
+    //    control. On a clean, short tap we fire the click ourselves — and swallow the
+    //    native one if it arrives after, so a tap never counts twice.
+    var last_synth = 0;
+    document.addEventListener('touchend', function(e){
+      if (window.innerWidth > 900 || !t_start) return;
+      var t = e.changedTouches && e.changedTouches[0];
+      if (!t) return;
+      var moved = Math.abs(t.clientX - t_start.x) > 12 || Math.abs(t.clientY - t_start.y) > 12;
+      if (moved || Date.now() - t_start.t > 700) return;
+      var hit = t_start.el && t_start.el.closest && t_start.el.closest(TAPPABLE);
+      if (!hit || hit.disabled) return;
+      last_synth = Date.now();
+      hit.click();
+    }, { passive:true });
+
+    document.addEventListener('click', function(e){
+      if (window.innerWidth > 900) return;
+      if (!e.isTrusted || Date.now() - last_synth > 500) return;
+      var hit = e.target && e.target.closest && e.target.closest(TAPPABLE);
+      if (!hit) return;
+      e.stopPropagation();
+      e.preventDefault();
+    }, true);
+  })();
+  </script>
+</helmet>
+<div id="tk-wrap" style="display:flex; gap:0; width:1200px; min-height:860px; background:linear-gradient(160deg,#12303f,#0a1c27); padding:26px; align-items:stretch; font-family:Inter,system-ui,sans-serif;">
+
+  <!-- ============ PHONE ============ -->
+  <div id="tk-phone" style="flex:none; width:400px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+    <div id="tk-frame" style="width:392px; height:800px; background:#0b0d0e; border-radius:46px; padding:11px; box-shadow:0 30px 60px rgba(0,0,0,.45), inset 0 0 0 2px #2a2d2f;">
+      <div id="tk-screen" style="position:relative; width:100%; height:100%; background:#ebe3d8; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+        <!-- Start-session screen: field-test scaffolding, not part of the bot. Nothing is
+             logged until Start, so a stray tap while setting the phone up does not land in
+             the data. Sits above the whole screen, including the notch. -->
+        <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 32 &middot; WEB</div>
+              <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
+              <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <label for="tk-pid" style="font:600 11px/1.4 'Barlow Condensed',Inter,sans-serif; letter-spacing:.1em; color:rgba(238,233,224,.6);">PARTICIPANT ID</label>
+              <input id="tk-pid" value="{{ pid }}" onInput="{{ onPid }}" onKeyDown="{{ onPidKey }}" placeholder="P-03" autocapitalize="characters" autocomplete="off" style="width:100%; box-sizing:border-box; border:1px solid rgba(238,233,224,.28); background:rgba(0,0,0,.22); border-radius:8px; padding:15px 14px; font:600 19px/1.2 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0;">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <span style="font:600 11px/1.4 'Barlow Condensed',Inter,sans-serif; letter-spacing:.1em; color:rgba(238,233,224,.6);">LANGUAGE</span>
+              <div style="display:flex; gap:8px;">
+                <button onClick="{{ onLangEn }}" style="flex:1; min-height:46px; border:1px solid {{ langEnBd }}; border-radius:8px; background:{{ langEnBg }}; color:{{ langEnFg }}; font:600 15px/1.2 Barlow,sans-serif; cursor:pointer;">English</button>
+                <button onClick="{{ onLangAf }}" style="flex:1; min-height:46px; border:1px solid {{ langAfBd }}; border-radius:8px; background:{{ langAfBg }}; color:{{ langAfFg }}; font:600 15px/1.2 Barlow,sans-serif; cursor:pointer;">Afrikaans</button>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:flex-start; gap:10px; border:1px solid rgba(233,164,143,.4); border-radius:8px; background:rgba(201,75,48,.14); padding:10px 12px;">
+                <span style="flex:none; font:700 9.5px/1.5 'Roboto Mono',monospace; letter-spacing:.08em; color:#E9A48F;">1</span>
+                <div style="flex:1; font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.82);">Volume up, silent mode off. Start plays a two-tone beep that anchors this log to your audio recording &mdash; on silent, there is no anchor.</div>
+                <button onClick="{{ onTestTone }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 11px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">TEST</button>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:10px; padding:0 12px;">
+                <span style="flex:none; font:700 9.5px/1.5 'Roboto Mono',monospace; letter-spacing:.08em; color:rgba(238,233,224,.45);">2</span>
+                <div style="flex:1; font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.6);">Start the audio recorder, then tap Start, then hand over the phone.</div>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:10px; padding:0 12px;">
+                <span style="flex:none; font:700 9.5px/1.5 'Roboto Mono',monospace; letter-spacing:.08em; color:rgba(238,233,224,.45);">3</span>
+                <div style="flex:1; font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.6);">Two parts, one recording. Part 1 ends when the participant opens Maps &mdash; the transport interview happens with the audio still running, then you start the symptom check. Hold the bar at the bottom to reach the controls.</div>
+              </div>
+              <button onClick="{{ onStartSession }}" style="width:100%; min-height:54px; border:none; border-radius:8px; background:#C94B30; font:600 17px/1.2 Barlow,sans-serif; letter-spacing:.01em; color:#fff; cursor:pointer;" style-active="background:#A83C24">Start session &middot; beep</button>
+              <sc-if value="{{ canResume }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ onResume }}" style="width:100%; min-height:48px; border:1px solid rgba(238,233,224,.34); border-radius:8px; background:transparent; font:600 14px/1.3 Barlow,sans-serif; color:#EEE9E0; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">{{ resumeLabel }}</button>
+              </sc-if>
+              <div style="font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.5);">{{ sessionFootnote }}</div>
+            </div>
+          </div>
+        </sc-if>
+        <!-- notch -->
+        <div id="tk-notch" style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:132px; height:26px; background:#0b0d0e; border-radius:0 0 16px 16px; z-index:20;"></div>
+        <!-- iOS status bar -->
+        <div id="tk-status" style="flex:none; position:relative; height:44px; background:#f6f6f6; display:flex; align-items:flex-end; justify-content:space-between; padding:0 24px 4px; z-index:12;">
+          <span style="font-family:-apple-system,'SF Pro Text',Inter,sans-serif; font-weight:600; font-size:14.5px; color:#000; letter-spacing:.01em;">14:34</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="#000"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="#000"><path d="M8.5 2.2c2.5 0 4.8 1 6.4 2.6l1.3-1.4A11 11 0 008.5.2 11 11 0 00.3 3.4l1.3 1.4A8.9 8.9 0 018.5 2.2zm0 3.6c1.5 0 2.9.6 3.9 1.6l1.3-1.4a7.4 7.4 0 00-10.4 0l1.3 1.4A5.5 5.5 0 018.5 5.8zm0 3.6c.6 0 1.2.3 1.6.7L8.5 12 6.9 10.1c.4-.4 1-.7 1.6-.7z"/></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="1" y="1" width="21" height="10" rx="2.6" stroke="#000" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="17" height="6.8" rx="1.4" fill="#000"/><rect x="23" y="4" width="1.6" height="4" rx=".8" fill="#000" fill-opacity=".4"/></svg>
+          </div>
+        </div>
+        <!-- iOS WhatsApp nav bar -->
+        <div style="flex:none; background:#f6f6f6; border-bottom:1px solid rgba(0,0,0,.13); padding:5px 10px 8px; display:flex; align-items:center; gap:4px; z-index:10;">
+          <div style="display:flex; align-items:center; color:#008069; cursor:pointer; flex:none;">
+            <svg width="13" height="22" viewBox="0 0 13 22" fill="none"><path d="M11 1L2 11l9 10" stroke="#008069" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; align-items:center; justify-content:center; gap:8px;">
+            <img src="assets/bot-avatar.png" alt="" style="width:34px; height:34px; border-radius:50%; object-fit:cover; background:#fff;">
+            <div style="min-width:0; text-align:left;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span style="font-family:-apple-system,'SF Pro Text',Barlow,sans-serif; font-weight:600; font-size:16px; color:#000; white-space:nowrap;">SnakeIQ Emergency</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#008069"><path d="M12 2l2.4 1.8 3 .1 1 2.8 2.4 1.8-.9 2.9.9 2.9-2.4 1.8-1 2.8-3 .1L12 22l-2.4-1.8-3-.1-1-2.8L3.2 14.5l.9-2.9-.9-2.9 2.4-1.8 1-2.8 3-.1z"/><path d="M10.6 14.6l-2.1-2.1-1.2 1.2 3.3 3.3 5.9-5.9-1.2-1.2z" fill="#f6f6f6"/></svg>
+              </div>
+              <div style="font-size:11.5px; color:#8696a0;">online</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:18px; flex:none; padding-right:4px;">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="#008069"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg>
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="#008069"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z"/></svg>
+          </div>
+        </div>
+        <!-- chat scroll -->
+        <div id="wa-scroll" style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:12px 12px 8px; background-color:#ece5dc; background-image:radial-gradient(rgba(120,100,70,.06) 1px, transparent 1px); background-size:22px 22px;">
+          {{ thread }}
+        </div>
+        <!-- input bar -->
+        <div id="tk-composer" style="flex:none; background:#f6f6f6; border-top:1px solid rgba(0,0,0,.08); padding:7px 8px 9px; display:flex; align-items:center; gap:8px;">
+          <div onClick="{{ onPlus }}" title="Attach a photo" style="flex:none; display:flex; align-items:center; cursor:pointer;" style-active="opacity:0.55">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#008069"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+          </div>
+          <div style="position:relative; flex:1; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:22px; padding:9px 13px;">
+            <sc-if value="{{ showHint }}" hint-placeholder-val="{{ true }}">
+              <div style="position:absolute; left:13px; right:34px; top:50%; transform:translateY(-50%); font-family:Inter,sans-serif; font-size:13px; letter-spacing:-0.1px; color:#8696a0; pointer-events:none; white-space:nowrap;">{{ inputHint }}</div>
+            </sc-if>
+            <input id="wa-input" value="{{ inputValue }}" onInput="{{ onInput }}" onKeyDown="{{ onKey }}" style="flex:1; border:none; font-family:Inter,sans-serif; font-size:14.5px; color:#111b21; background:transparent;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#8696a0"><path d="M16.5 6.5l-8 8a2.5 2.5 0 003.5 3.5l8-8a4.5 4.5 0 00-6.4-6.4l-8 8a6.5 6.5 0 009.2 9.2l7.3-7.3-1.4-1.4-7.3 7.3a4.5 4.5 0 01-6.4-6.4l8-8a2.5 2.5 0 013.5 3.5l-8 8a.5.5 0 01-.7-.7l8-8z"/></svg>
+          </div>
+          <button onClick="{{ onSend }}" style="flex:none; width:44px; height:44px; border:none; border-radius:50%; background:#008069; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 4l7 7h-4v9h-6v-9H5l7-7z"/></svg>
+          </button>
+        </div>
+        <!-- Real capture hand-off: `capture` opens the camera app, the plain input opens
+             the library/camera chooser. Both hand a File straight back to the flow. -->
+        <input type="file" accept="image/*" capture="environment" ref="{{ camRef }}" onChange="{{ onFilePicked }}" style="display:none;">
+        <input type="file" accept="image/*" ref="{{ libRef }}" onChange="{{ onFilePicked }}" style="display:none;">
+        <!-- Recording strip: the only persistent reminder that a session is live, and the
+             one place the log can be pulled off the phone. Sits under the composer as a
+             flex row rather than floating over it. -->
+        <sc-if value="{{ stripClosed }}" hint-placeholder-val="{{ false }}">
+          <div id="tk-strip-shut" onPointerDown="{{ onStripHold }}" onPointerUp="{{ onStripRelease }}" onPointerLeave="{{ onStripRelease }}" style="flex:none; display:flex; align-items:center; gap:9px; background:#11344F; padding:6px 12px 8px; cursor:pointer; user-select:none; -webkit-user-select:none;">
+            <span style="flex:none; width:7px; height:7px; border-radius:50%; background:{{ logDot }};"></span>
+            <span style="flex:1; min-width:0; font:600 10.5px/1.4 'Roboto Mono',monospace; letter-spacing:.04em; color:rgba(238,233,224,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ logStatus }}</span>
+            <span style="flex:none; font:600 9px/1.4 'Roboto Mono',monospace; letter-spacing:.1em; color:rgba(238,233,224,.34);">HOLD</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ stripOpen }}" hint-placeholder-val="{{ false }}">
+          <div id="tk-strip" style="flex:none; display:flex; align-items:center; gap:7px; background:#11344F; padding:7px 12px 9px;">
+            <span style="flex:none; width:8px; height:8px; border-radius:50%; background:{{ logDot }};"></span>
+            <span onClick="{{ onStripClose }}" title="Hide the controls" style="flex:1; min-width:0; font:600 11px/1.4 'Roboto Mono',monospace; letter-spacing:.04em; color:rgba(238,233,224,.82); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;">{{ logStatus }} &nbsp;&times;</span>
+            <button onClick="{{ onExportLog }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">CSV</button>
+            <button onClick="{{ onExportLabels }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">TABBED</button>
+            <button onClick="{{ onSessionAction }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">{{ sessionActionLabel }}</button>
+          </div>
+        </sc-if>
+        <!-- Researcher-facing interval between the two parts. The clock keeps running and
+             the log keeps the gap, so the transport interview is inside the same timeline. -->
+        <sc-if value="{{ interstitial }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:55; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:22px; padding:34px 26px calc(30px + env(safe-area-inset-bottom)); overflow-y:auto;">
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">PART 1 COMPLETE &middot; RECORDING</div>
+              <div style="font:600 25px/1.16 Barlow,sans-serif; color:#EEE9E0;">Transport interview</div>
+              <div style="font:400 13px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Leave the audio running. The clock and the log are still live, so this whole interval lands in the same timeline.</div>
+              <div style="font:400 12px/1.5 Inter,sans-serif; color:rgba(233,164,143,.9);">Maps was not opened on purpose &mdash; leaving Safari ends the session on iOS. Open it on your own phone if you want to watch that step.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:1px; border-radius:8px; overflow:hidden; border:1px solid rgba(238,233,224,.16);">
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">1</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">Show me what you would do next.</span></div>
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">2</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">Who would you contact?</span></div>
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">3</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">Where would you go?</span></div>
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">4</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">How would you arrange transport?</span></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="font:600 12px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:rgba(238,233,224,.55);">ELAPSED {{ interviewClock }}</div>
+              <button onClick="{{ onBeginPart2 }}" style="width:100%; min-height:54px; border:none; border-radius:8px; background:#C94B30; font:600 17px/1.2 Barlow,sans-serif; color:#fff; cursor:pointer;" style-active="background:#A83C24">Begin symptom check &middot; beep</button>
+              <div style="font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.5);">Three ascending tones mark part 2 in the recording. Hand the phone back after the beep.</div>
+            </div>
+          </div>
+        </sc-if>
+        <!-- WhatsApp's own location picker: opened by the client, not a Twilio template -->
+        <sc-if value="{{ locSheetOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:30; background:rgba(0,0,0,.4); display:flex; align-items:flex-end;">
+            <div style="width:100%; height:87%; background:#f6f6f6; border-radius:14px 14px 34px 34px; display:flex; flex-direction:column; overflow:hidden;">
+              <div style="flex:none; display:flex; align-items:center; gap:14px; padding:13px 15px 11px; background:#f6f6f6; border-bottom:1px solid rgba(0,0,0,.1);">
+                <div onClick="{{ closeLocSheet }}" style="display:flex; cursor:pointer;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="#008069"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+                </div>
+                <span style="font-family:-apple-system,'SF Pro Text',Inter,sans-serif; font-weight:600; font-size:16px; color:#111b21;">Send location</span>
+              </div>
+              <div style="flex:none; padding:9px 13px; background:#f6f6f6;">
+                <div style="display:flex; align-items:center; gap:8px; background:#e7e5e2; border-radius:9px; padding:8px 11px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#8696a0"><path d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 10-.7.7l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>
+                  <span style="font-family:Inter,sans-serif; font-size:13.5px; color:#8696a0;">Search a place</span>
+                </div>
+              </div>
+              <div style="flex:1; min-height:0; position:relative; background:#e8e3d9 url('assets/maps/swellendam.png') center/cover no-repeat; overflow:hidden;">
+                
+                
+                
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-100%); filter:drop-shadow(0 3px 4px rgba(0,0,0,.3));">
+                  <svg width="38" height="38" viewBox="0 0 24 24" fill="#C94B30"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>
+                </div>
+                <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); background:rgba(17,27,33,.78); color:#fff; font-family:Inter,sans-serif; font-size:11.5px; padding:5px 11px; border-radius:100px; white-space:nowrap;">Drag the map to move the pin</div>
+              </div>
+              <div style="flex:none; background:#fff; border-top:1px solid rgba(0,0,0,.08);">
+                <div onClick="{{ onSendPin }}" style="display:flex; align-items:center; gap:11px; padding:13px 15px; cursor:pointer;" style-active="background:#f2efe8">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="#008069"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="font-family:Inter,sans-serif; font-weight:500; font-size:14.5px; color:#008069;">Send this location</span>
+                    <span style="font-family:Inter,sans-serif; font-size:12px; color:#667781;">Dropped pin &middot; Swellendam, Western Cape</span>
+                  </div>
+                </div>
+                <div style="font-family:'Barlow Condensed',Inter,sans-serif; font-size:11.5px; font-weight:600; letter-spacing:.08em; color:#8696a0; padding:6px 15px 4px; border-top:1px solid rgba(0,0,0,.07);">NEARBY PLACES</div>
+                <div onClick="{{ onSendPlace1 }}" style="display:flex; align-items:center; gap:11px; padding:10px 15px; cursor:pointer;" style-active="background:#f2efe8">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#8696a0"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>
+                  <div style="display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-family:Inter,sans-serif; font-size:14px; color:#111b21;">Drostdy Museum</span>
+                    <span style="font-family:Inter,sans-serif; font-size:12px; color:#667781;">Museum &middot; 600 m</span>
+                  </div>
+                </div>
+                <div onClick="{{ onSendPlace2 }}" style="display:flex; align-items:center; gap:11px; padding:10px 15px; cursor:pointer;" style-active="background:#f2efe8">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#8696a0"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>
+                  <div style="display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-family:Inter,sans-serif; font-size:14px; color:#111b21;">Swellendam Taxi Rank</span>
+                    <span style="font-family:Inter,sans-serif; font-size:12px; color:#667781;">Transport &middot; 1.2 km</span>
+                  </div>
+                </div>
+                <div onClick="{{ onSendPlace3 }}" style="display:flex; align-items:center; gap:11px; padding:10px 15px 14px; cursor:pointer;" style-active="background:#f2efe8">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#8696a0"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>
+                  <div style="display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-family:Inter,sans-serif; font-size:14px; color:#111b21;">N2 towards Riversdale</span>
+                    <span style="font-family:Inter,sans-serif; font-size:12px; color:#667781;">Road &middot; 2.8 km</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+    <div id="tk-caption" style="font-family:'Roboto Mono',monospace; font-size:11px; color:rgba(255,255,255,.42); text-align:center; letter-spacing:.02em;">Testkit &middot; real camera, real GPS &middot; open on a phone to field test</div>
+  </div>
+
+  <!-- ============ INSPECTOR ============ -->
+  <div id="tk-ins" style="flex:1; min-width:0; margin-left:24px; display:flex; flex-direction:column; background:#0b1e2b; border-radius:16px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.06);">
+    <div style="flex:none; padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:14px;">
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span style="font-family:'Roboto Mono',monospace; font-size:11px; font-weight:600; letter-spacing:.08em; color:#f2d0c6; background:#7a2d1c; border-radius:5px; padding:3px 8px;">C &middot; TESTKIT</span>
+          <span style="font-family:Barlow,sans-serif; font-weight:600; font-size:17px; color:#fff; letter-spacing:.01em;">Twilio Content Inspector</span>
+        </div>
+        <div style="font-size:12px; color:#7f97a6; margin-top:4px;">Built for prototype fidelity: the phone&rsquo;s own camera and GPS, real distances</div>
+      </div>
+      <button onClick="{{ resetFlow }}" style="flex:none; font-family:'Roboto Mono',monospace; font-size:12px; color:#e9ddd3; background:rgba(201,75,48,.16); border:1px solid rgba(201,75,48,.5); border-radius:7px; padding:8px 13px; cursor:pointer;">&#8635; Restart flow</button>
+    </div>
+    <div class="ins-scroll" style="flex:1; overflow-y:auto; padding:20px 22px 28px;">
+      {{ inspectorBody }}
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:860}}">
+const __R = window.__resources || {};
+const SNAKE_PHOTO = __R.snakePhoto || "assets/snake-photo-wide.jpg";
+const MAP_IMG = __R.mapSwellendam || "assets/maps/swellendam.png";
+const SWELL_IMG = __R.swellingMark || "assets/swelling-mark-illustration.png";
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = { lang: "en", thread: [], turn: null, inputValue: "", intent: null, species: null, idMethod: null, severity: null, tmin: 34,
+      isVictim: true, hospital: "Swellendam Provincial Hospital", hasNeuro: false, selectedSymptoms: [], checkSel: {}, hasLoc: false,
+      seamA: false, seamB: false, keyStep: 0, keyAnswers: [], biteTime: null, symId: null, symTime: null, swell: false, locSheet: null, meds: null, bitePhoto: false, checkedIn: false,
+      photoUrl: null, snakeUrl: null, limbUrl: null, coords: null,
+      pid: "", sessionId: null, logCount: 0, sessionEnded: false };
+    this.camRef = React.createRef();
+    this.libRef = React.createRef();
+  }
+
+  // ---------- session event log (testkit only) ----------
+  // Why this exists: field notes cannot be aligned to taps after the fact. Each row is
+  // (participant, elapsed ms, event, detail), so a screen or audio recording lines up
+  // against real per-turn timings. Held in localStorage under the session id, so a tab
+  // reload or a phone locking mid-run does not lose the session.
+  logKey(){ return "snakeiq_tk_log_" + this.state.sessionId; }
+
+  // Sync tone. The whole point of the CSV is timings, and timings are only useful next to
+  // what the participant said \u2014 so the session opens with an audible anchor the external
+  // recorder picks up. Find the tone in the waveform and elapsed_ms 0 is that instant; the
+  // closing tone gives a second anchor, so recorder drift can be stretched out rather than
+  // trusted. Two short high tones, deliberately unlike any WhatsApp notification sound.
+  // Scheduling into a SUSPENDED context is what put anchors in random places: iOS suspends
+  // audio when the page is backgrounded (the Maps hand-off does exactly that), the context
+  // clock stops, and the queued notes all fire whenever the user returns to Safari. So the
+  // context is confirmed running BEFORE anything is scheduled, and `then(ok)` fires at the
+  // real onset — the caller logs from there, so the CSV timestamp is the sounding instant.
+  tone(kind, then){
+    const done = (ok)=>{ if (then) then(ok); };
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC){ done(false); return; }
+      this.ac = this.ac || new AC();
+      if (this.ac.state === "running") this.emitTone(kind, done);
+      else this.ac.resume().then(()=>this.emitTone(kind, done), ()=>done(false));
+    } catch(e){ done(false); }
+  }
+
+  emitTone(kind, done){
+    try {
+      if (this.ac.state !== "running"){ done(false); return; }
+      const t0 = this.ac.currentTime + 0.02;
+      const DUR = 0.26;   // long enough to survive a noisy room and to place by eye
+      // A phone speaker is small and the recorder is across the table, so the tone is
+      // pushed as loud as it can go without clipping: a limiter on the output, and each
+      // note stacked with its octave and fifth, which a small driver reproduces far
+      // better than a lone sine. Still unlike any WhatsApp notification sound.
+      const lim = this.ac.createDynamicsCompressor();
+      lim.threshold.value = -1; lim.knee.value = 0; lim.ratio.value = 20;
+      lim.attack.value = 0.001; lim.release.value = 0.05;
+      const out = this.ac.createGain();
+      out.gain.value = 1;
+      lim.connect(out); out.connect(this.ac.destination);
+      // Four distinguishable anchors across one long recording: ascending pair opens the
+      // session, DESCENDING pair closes part 1, three ascending opens part 2, three DESCENDING
+      // ends the test — the mirror of the part-2 opener, unmistakable at the tail of a recording.
+      // Four anchors also let drift be corrected piecewise instead of stretched end to end.
+      const G = DUR + 0.06;
+      const notes = kind === "end" ? [[2093,0],[1760,G],[1320,G*2]]
+        : kind === "part1end" ? [[1760,0],[1320,G]]
+        : kind === "part2start" ? [[1320,0],[1760,G],[2093,G*2]]
+        : [[1320,0],[1760,G]];
+      notes.forEach(([hz,off])=>{
+        const g = this.ac.createGain();
+        // hard-ish edges keep the onset sharp enough to place by eye in a waveform
+        g.gain.setValueAtTime(0.0001, t0+off);
+        g.gain.exponentialRampToValueAtTime(1, t0+off+0.006);
+        g.gain.setValueAtTime(1, t0+off+DUR-0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+off+DUR);
+        g.connect(lim);
+        [[1,1],[2,0.5],[3,0.28]].forEach(([mult,amp])=>{
+          const o = this.ac.createOscillator(), og = this.ac.createGain();
+          o.type = "sine"; o.frequency.value = hz*mult; og.gain.value = amp;
+          o.connect(og); og.connect(g);
+          o.start(t0+off); o.stop(t0+off+DUR+0.02);
+        });
+      });
+      setTimeout(()=>done(true), 20);
+    } catch(e){ done(false); }
+  }
+
+  elapsedLabel(){
+    if (!this.t0) return "0:00";
+    const s = Math.floor((Date.now() - this.t0)/1000);
+    return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+  }
+
+  startSession(){
+    const pid = (this.state.pid || "").trim().toUpperCase() || "ANON";
+    const sid = pid + "_" + new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
+    // Tone and t0 are set together: the anchor in the audio IS elapsed_ms 0.
+    this.log = [];
+    if (!this.visBound){
+      this.visBound = true;
+      // An anchor that could not sound is held until the page is in front again.
+      document.addEventListener("visibilitychange", ()=>this.fireAnchor());
+    }
+    this.tone("start", (ok)=>{
+      this.t0 = Date.now();
+      this.setState({ pid, sessionId: sid, sessionEnded: false, logCount: 0, toned: ok, phase: 1, interstitial: false, stripOpen: false }, ()=>{
+        this.logEvent("sync_tone", ok ? "start tone \u00b7 1320 Hz then 1760 Hz \u00b7 260 ms each \u00b7 anchor is the FIRST onset, 0 ms" : "SILENT \u2014 no anchor in the audio");
+        this.logEvent("session_start", navigator.userAgent.slice(0,120));
+        this.enter("welcome", true);
+      });
+    });
+  }
+
+  logEvent(event, detail, force){
+    if (!this.state.sessionId || (this.state.sessionEnded && !force)) return;
+    this.log = (this.log || []).concat([{ ms: Date.now() - this.t0, event, detail: detail || "" }]);
+    try {
+      localStorage.setItem(this.logKey(), JSON.stringify({ pid:this.state.pid, started:this.t0,
+        phase:this.state.phase || 1, sid:this.state.sessionId, rows:this.log }));
+      localStorage.setItem("snakeiq_tk_last", this.state.sessionId);
+    } catch(e){}
+    this.setState({ logCount: this.log.length });
+  }
+
+  logCsv(){
+    const esc = v => '"' + String(v).replace(/"/g,'""') + '"';
+    const rows = (this.log || []).map((r,i)=>[i+1, this.state.pid, r.ms, (r.ms/1000).toFixed(2), r.event, r.detail].map(esc).join(","));
+    return ["# anchors: 0 ms = ascending pair (session start) · part1_end = descending pair · part2_start = three ascending · session_end = one tone",
+      "seq,participant,elapsed_ms,elapsed_s,event,detail"].concat(rows).join("\n");
+  }
+
+  // Audacity's label importer reads TAB-separated "start<TAB>end<TAB>text" and nothing else —
+  // a comma file with a header silently imports as an empty label track. Zero-length labels
+  // (start == end) are the right shape here: an event is an instant, not a region.
+  logLabels(){
+    return (this.log || []).map(r=>{
+      const t = (r.ms/1000).toFixed(3);
+      const text = (r.event + (r.detail ? " · " + r.detail : "")).replace(/[\t\r\n]+/g," ").slice(0,120);
+      return t + "\t" + t + "\t" + text;
+    }).join("\n") + "\n";
+  }
+
+  save(name, text, mime){
+    const blob = new Blob([text], { type:mime });
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }
+
+  // Two buttons, not one: iOS suppresses a second programmatic download that is not
+  // tied to its own tap, so a chained labels file dies silently.
+  exportLog(){ this.save("snakeiq_" + this.state.sessionId + ".csv", this.logCsv(), "text/csv"); }
+  exportLabels(){ this.save("snakeiq_" + this.state.sessionId + "_labels.txt", this.logLabels(), "text/plain"); }
+
+  // ---- Part boundary -------------------------------------------------------------
+  // One session, one t0, one clock across both parts: the interview sits INSIDE the log
+  // as a labelled interval, so a single label track covers the whole recording. Ending
+  // and restarting would give two t0s to reconcile against one audio file.
+  // Nothing backgrounds the page any more, so the anchor sounds straight away. The queue
+  // and the visibilitychange release stay as a safety net: if the phone is switched away
+  // for any reason, the anchor is held and fired when the page is in front again, and it
+  // is logged when it SOUNDS, which is what the waveform shows.
+  endPart1(){
+    this.logEvent("part1_end", "tapped Open in Google Maps — transport interview starts");
+    this.pendingAnchor = "part1end";
+    this.setState({ interstitial: true, stripOpen: false });
+    this.fireAnchor();
+  }
+
+  fireAnchor(){
+    if (!this.pendingAnchor || document.hidden) return;
+    const kind = this.pendingAnchor;
+    this.pendingAnchor = null;
+    const label = kind === "part1end"
+      ? "part 1 end · 1760 then 1320 Hz · descending pair"
+      : "part 2 start · 1320/1760/2093 Hz · three ascending";
+    this.tone(kind, (ok)=>this.logEvent("sync_tone", ok ? label : "SILENT — anchor missing, align on the neighbouring event"));
+  }
+
+  beginPart2(){
+    this.logEvent("part2_start", "transport interview ended · " + this.elapsedLabel() + " elapsed");
+    this.pendingAnchor = "part2start";
+    this.fireAnchor();
+    // The phone goes back to the participant here, so the controls close with it.
+    this.closeStrip();
+    this.setState({ phase: 2, interstitial: false }, ()=>this.enter("symptom_alert", true));
+  }
+
+  // Collapsed by default so the participant cannot reach END or an export while holding
+  // the phone. A deliberate ~800ms press opens it; anything shorter is an accident.
+  holdStrip(){
+    this.holdT = setTimeout(()=>{ this.holdT = null; this.openStrip(); }, 800);
+  }
+  releaseStrip(){ if (this.holdT){ clearTimeout(this.holdT); this.holdT = null; } }
+
+  // Opening is deliberate; closing must not be. A single tap on the status area shuts it,
+  // and it shuts itself after 12s so the phone never goes back to the participant with
+  // END and the exports exposed.
+  openStrip(){
+    if (this.shutT) clearTimeout(this.shutT);
+    this.shutT = setTimeout(()=>{ this.shutT = null; this.setState({ stripOpen: false }); }, 12000);
+    this.setState({ stripOpen: true });
+  }
+  closeStrip(){
+    if (this.shutT){ clearTimeout(this.shutT); this.shutT = null; }
+    this.setState({ stripOpen: false });
+  }
+
+  endSession(){
+    this.tone("end", (ok)=>this.logEvent("sync_tone", ok ? "end tone \u00b7 2093 \u2192 1760 \u2192 1320 Hz \u00b7 260 ms each \u00b7 closing anchor is the FIRST onset" : "SILENT \u2014 no closing anchor in the audio", true));
+    this.logEvent("session_end", this.state.logCount + " events");
+    this.setState({ sessionEnded: true });
+  }
+
+  // Back to the start screen for the next participant. The finished log stays in local
+  // storage under its own session id, so an un-exported run is recoverable rather than
+  // overwritten \u2014 but the strip keeps CSV live after END so it rarely comes to that.
+  newSession(){
+    this.eng = null; this.typeRowShown = false; this.photoBusy = false;
+    if (this.tick){ clearInterval(this.tick); this.tick = null; }
+    if (this.shutT){ clearTimeout(this.shutT); this.shutT = null; }
+    this.log = []; this.t0 = null;
+    if (this.state.photoUrl) URL.revokeObjectURL(this.state.photoUrl);
+    this.setState({ thread: [], turn: null, inputValue: "", intent: null, species: null, idMethod: null,
+      severity: null, tmin: 34, isVictim: null, hasLoc: false, hospital: "Swellendam Provincial Hospital",
+      checkSel: {}, seamA: false, seamB: false, keyStep: 0, keyAnswers: [], biteTime: null, symId: null,
+      swell: false, locSheet: null, meds: null, bitePhoto: false, checkedIn: false, photoUrl: null,
+      snakeUrl: null, limbUrl: null, symTime: null, coords: null, pid: "", sessionId: null, logCount: 0, sessionEnded: false });
+  }
+
+  // ---------- device hand-offs (testkit only) ----------
+  // The bot cannot open a camera; the client does. A hidden file input is the honest
+  // equivalent: the OS camera app takes the picture and hands back a File, exactly as
+  // WhatsApp hands the bot an inbound media message.
+  capture(useCamera, then){
+    const el = useCamera ? this.camRef.current : this.libRef.current;
+    if (!el){ then(); return; }
+    this.pendingCapture = then;
+    el.value = "";
+    el.click();
+  }
+  filePicked(e){
+    const f = e.target.files && e.target.files[0], then = this.pendingCapture;
+    this.pendingCapture = null;
+    if (!f){ this.logEvent("capture_cancelled",""); return; }   // the turn stays open
+    this.logEvent("photo_captured", Math.round(f.size/1024) + " kB");
+    this.setState({ photoUrl: URL.createObjectURL(f) }, ()=>{ if (then) then(); });
+  }
+
+  // Real fix from the handset. Distances downstream are computed from it.
+  sendCurrentLoc(msg, action){
+    if (!navigator.geolocation){ this.pick(msg, action); return; }
+    this.setState(s=>({ thread: s.thread.concat([{ t:"note", text:"Waiting for GPS\u2026" }]) }));
+    const clearWait = s => s.thread.filter(x => !(x.t==="note" && x.text.indexOf("Waiting for GPS") === 0));
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        const c = { lat:p.coords.latitude, lng:p.coords.longitude, acc:Math.round(p.coords.accuracy) };
+        this.logEvent("gps_fix", c.lat.toFixed(5)+" "+c.lng.toFixed(5)+" \u00b1"+c.acc+"m");
+        this.setState(s=>({ coords:c, thread:clearWait(s) }), ()=>{
+          this.pick(msg, Object.assign({}, action, { echo:null }));
+          this.setState(s=>({ thread: s.thread.concat([{ t:"userloc",
+            label:"Current location \u00b7 "+c.lat.toFixed(4)+", "+c.lng.toFixed(4)+" \u00b7 \u00b1"+c.acc+" m" }]) }));
+        });
+      },
+      () => this.setState(s=>({ thread: (this.logEvent("gps_failed",""), clearWait(s)).concat([{ t:"note",
+        text:"GPS unavailable \u2014 falling back to the scripted Swellendam location." }]) }), ()=>this.pick(msg, action)),
+      { enableHighAccuracy:true, timeout:12000, maximumAge:0 }
+    );
+  }
+
+  static hav(a,b){
+    const R=6371, rad=Math.PI/180;
+    const dLat=(b.lat-a.lat)*rad, dLng=(b.lng-a.lng)*rad;
+    const h=Math.sin(dLat/2)**2 + Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLng/2)**2;
+    return 2*R*Math.asin(Math.sqrt(h));
+  }
+  // Straight-line distance from the real fix; the scripted figure when there is none.
+  km(key, fallback){
+    const c=this.state.coords, f=FACILITIES[key];
+    if (!c || !f) return fallback;
+    const d=Component.hav(c,f);
+    return (d<10 ? d.toFixed(1) : Math.round(d))+" km";
+  }
+  eta(key, fallback){
+    const c=this.state.coords, f=FACILITIES[key];
+    if (!c || !f) return fallback;
+    return "~"+Math.max(3, Math.round(Component.hav(c,f)/45*60))+" min";
+  }
+  mapsUrl(key){
+    const f=FACILITIES[key], c=this.state.coords;
+    return "https://www.google.com/maps/dir/?api=1&destination="+f.lat+","+f.lng
+      + (c ? "&origin="+c.lat+","+c.lng : "") + "&travelmode=driving";
+  }
+  componentDidMount(){ /* the flow starts on Start, not on load */
+    this.tick = setInterval(()=>{ if (this.state.sessionId && !this.state.sessionEnded) this.forceUpdate(); }, 1000);
+    // If the tab was reclaimed mid-session, the log is still on the phone. Offer to carry
+    // on against the ORIGINAL t0 so the recording stays aligned to one anchor.
+    try {
+      const sid = localStorage.getItem("snakeiq_tk_last");
+      if (sid){
+        const saved = JSON.parse(localStorage.getItem("snakeiq_tk_log_" + sid) || "null");
+        if (saved && saved.rows && saved.rows.length) this.setState({ resumable: saved });
+      }
+    } catch(e){}
+  }
+
+  resumeSession(){
+    const r = this.state.resumable;
+    if (!r) return;
+    this.log = r.rows;
+    this.t0 = r.started;
+    if (!this.visBound){
+      this.visBound = true;
+      document.addEventListener("visibilitychange", ()=>this.fireAnchor());
+    }
+    this.setState({ pid:r.pid, sessionId:r.sid, phase:r.phase || 1, sessionEnded:false,
+      logCount:r.rows.length, toned:true, interstitial:false, stripOpen:false, resumable:null }, ()=>{
+      this.logEvent("session_resumed", "picked up after " + this.elapsedLabel() + " \u2014 same clock, same anchor");
+      this.enter((r.phase || 1) === 2 ? "symptom_alert" : "welcome", true);
+    });
+  }
+  componentWillUnmount(){ clearInterval(this.tick); }
+  componentDidUpdate(){
+    const el = document.getElementById("wa-scroll");
+    if (!el) return;
+    // Auto-scroll only when a NEW message arrives and the reader is already at the foot of
+    // the thread. Without this the per-second clock re-render yanked the view back down
+    // mid-scroll, which is unreadable and unmeasurable in a field session.
+    //
+    // The smooth scroll fires scroll events of its own, all of them far from the bottom
+    // until the animation lands. Reading those as user intent latched "the reader has
+    // scrolled away" mid-flight and stranded the next message below the fold, so the
+    // listener ignores anything that happens while we are the ones scrolling.
+    if (!el.__waBound){
+      el.__waBound = true;
+      this.atBottom = true;
+      el.addEventListener("scroll", ()=>{
+        if (this.__autoScrolling) return;
+        this.atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 90;
+      }, { passive:true });
+    }
+    const len = this.state.thread.length;
+    const grew = len > (this.__threadLen || 0);
+    this.__threadLen = len;
+    if (!grew || this.atBottom === false) return;
+    this.__autoScrolling = true;
+    clearTimeout(this.__autoScrollT);
+    // Cleared on scrollend where it exists, and on a timeout everywhere else — Safari only
+    // shipped scrollend recently and the field phones will not all have it.
+    this.__autoScrollT = setTimeout(()=>{
+      this.__autoScrolling = false;
+      this.atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 90;
+    }, 700);
+    if ("onscrollend" in window && !el.__waEnd){
+      el.__waEnd = true;
+      el.addEventListener("scrollend", ()=>{
+        clearTimeout(this.__autoScrollT);
+        this.__autoScrolling = false;
+        this.atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 90;
+      });
+    }
+    if (this.__firstPaint === false) el.scrollTo({ top: el.scrollHeight, behavior:"smooth" });
+    else { el.scrollTop = el.scrollHeight; this.__firstPaint = false; }
+  }
+
+  // ---------- palette ----------
+  static ALERT_BODY = "*Symptom check*\n\nCan you answer a few questions about your snake bite symptoms?";
+  static PROTO_NOTE = "Elapsed time = species symptom check interval. If victim is waiting for transportation or en route, this might be a good time to collect missing information.";
+  // South Africa writes and speaks the 24-hour clock, so every clock time in the flow is
+  // 24-hour. The victim may still TYPE am/pm — parseTime accepts either.
+  static fmt24(mins){ const H = Math.floor(mins/60), M = mins%60;
+    return String(H).padStart(2,"0") + ":" + String(M).padStart(2,"0"); }
+  // A duration is never read as a raw minute count once it passes an hour: "14h 14m",
+  // not "854 min". Under an hour, minutes are what a person actually says.
+  // Disambiguation is asked in 12-hour terms, because that is the notation that created
+  // the ambiguity — "1:15 am or 1:15 pm?" is the question the person can actually answer.
+  static fmt12(min){
+    const H = Math.floor(min/60), M = min%60;
+    const h = H%12 === 0 ? 12 : H%12;
+    return h+":"+String(M).padStart(2,"0")+" "+(H<12 ? "am" : "pm");
+  }
+
+  static biteAt(min){
+    const ago = Math.max(0, CHAT_START_MIN - min);
+    return { id: ago < 5 ? "t_lt5" : ago < 15 ? "t_5_15" : ago < 60 ? "t_15_60" : ago < 360 ? "t_1_6h" : "t_gt6h",
+      label: Component.fmt24(min), minutesBeforeChat: ago };
+  }
+
+  static dur(mins){
+    const m = Math.max(0, Math.round(mins));
+    if (m < 60) return m + " min";
+    const H = Math.floor(m/60), M = m%60;
+    return H + "h" + (M ? " " + M + "m" : "");
+  }
+  static C = { navy:"#11344F", verm:"#C94B30", teal:"#447687", bronze:"#A0713F", green:"#008069",
+    inBg:"#ffffff", outBg:"#d9fdd3", txt:"#111b21", meta:"#667781", tick:"#53bdeb" };
+
+  clock(){ const m = this.state.tmin; const h = 14; return h + ":" + String(m).padStart(2,"0"); }
+
+  // Afrikaans is applied at the DISPLAY layer only. The Twilio payloads in the inspector
+  // stay English: they are the spec the engineers build against, and a translated
+  // friendly_name would be a different template.
+  t(s){ return (this.state.lang === "af" && window.SnakeIQ_AF) ? window.SnakeIQ_AF.t(s) : s; }
+
+  // ---------- flow entry ----------
+  enter(id, initial){
+    this.logEvent("turn", id);
+    const built = this.buildState(id);
+    this.setState(s => {
+      let thread = initial ? [
+        { t:"sys", text:"Messages are end-to-end encrypted. SnakeIQ never sees this thread until you send." },
+        { t:"day" },
+        { t:"user", text:"Help \u2014 snake!" }
+      ] : s.thread.slice();
+      thread = thread.concat(built.msgs);
+      if (built.iact) thread.push(built.iact);
+      const next = { thread, turn: built.turn };
+      if (built.iact && built.iact.reset) next.checkSel = {};
+      return next;
+    });
+    // out-of-session symptom alert fires after hospital directions
+    if (id === "idkey") this.setState({ seamA: true });
+    if (id === "species_results") this.setState({ seamB: true });
+    // No auto-advance to the symptom check any more: part 1 ends when the participant
+    // opens Maps, and the researcher starts part 2 by hand after the transport interview.
+  }
+
+  pick(msg, action){
+    // Device hand-off first: the camera opens BEFORE the turn is frozen, so cancelling
+    // out of it leaves the buttons live instead of stranding a sent-photo bubble.
+    if ((action.next === "__photo" || action.next === "__limbphoto" || action.bitePhoto) && !action.captured){
+      this.capture(/take/i.test(action.title),
+        ()=>this.pick(msg, Object.assign({}, action, { captured:true })));
+      return;
+    }
+    this.logEvent("tap", action.title);
+    // freeze the tapped interactive
+    this.setState(s => {
+      const thread = s.thread.map(m => m === msg ? { ...m, done:true, picked: action.title } : m);
+      const echo = ("echo" in action) ? action.echo : action.title;
+      // Stored in English and translated at render: the thread stays language-agnostic, so
+      // switching language re-renders earlier bubbles instead of stranding them, and no
+      // string is ever passed through the dictionary twice.
+      if (echo) thread.push({ t:"user", text: echo });
+      return { thread, tmin: Math.min(59, s.tmin) };
+    });
+    if (action.url){
+      // Tapping "Open in Google Maps" IS the end of part 1 — the participant has committed
+      // to travelling, and that intent is the finding. We do NOT hand off to Maps: iOS
+      // reclaims a backgrounded tab, which loses the live session and silences the anchor
+      // tone. The researcher can open Maps on their own phone if they want to watch it.
+      if (action.partBreak && this.state.phase === 1){ this.endPart1(); return; }
+      if (action.href) window.open(action.href, "_blank", "noopener");
+      return;
+    }
+    if (action.next === "__none") return;
+    // special sequences
+    if (action.next === "__limbphoto"){
+      this.setState(s=>({ bitePhoto:true, limbUrl:s.photoUrl }));
+      setTimeout(()=>{
+        this.setState(s=>({ thread: s.thread.concat([{ t:"userphoto", kind:"limb", src:s.photoUrl }]) }));
+        setTimeout(()=>this.enter("sc_sent_photo"), 700);
+      }, 250);
+      return;
+    }
+    if (action.next === "__photo"){
+      this.setState(s=>({ idMethod:"photo", snakeUrl:s.photoUrl }));
+      setTimeout(()=>{
+        this.setState(s=>({ thread: s.thread.concat([{ t:"userphoto", src:s.photoUrl }]) }));
+        // location is asked while the image is being analysed — but only once per session
+        if (this.state.hasLoc){
+          setTimeout(()=>{
+            this.setState(s=>({ thread: s.thread.concat([{ t:"note", text:"Analyzing the image\u2026 this may take a minute." }]) }));
+            setTimeout(()=>this.enter("species_results"), 1100);
+          }, 500);
+        } else setTimeout(()=>this.enter("loc_photo"), 500);
+      }, 250);
+      return;
+    }
+    if (msg && msg.kind === "location") this.setState({ hasLoc: true });
+    if (action.species) this.setState({ species: action.species });
+    if (action.intent) this.setState({ intent: action.intent });
+    if (action.method) this.setState({ idMethod: action.method });
+    if (action.method === "key"){
+      this.setState({ seamA: true, keyStep: 0, keyAnswers: [] });
+      // hand the module everything Design already knows; it seeds its own candidate set
+      this.eng = ID().createSession(this.seamAPayload());
+    }
+    if (action.severity) this.setState({ severity: action.severity });
+    if (action.sym) this.setState({ symId: action.sym });
+    if (action.isVictim !== undefined) this.setState({ isVictim: action.isVictim });
+    if (action.hospital) this.setState({ hospital: action.hospital });
+    if (action.neuro) this.setState({ hasNeuro: true });
+    if (action.swell !== undefined) this.setState({ swell: action.swell });
+    if (action.bitePhoto) this.setState({ bitePhoto: true });
+    if (action.checkedIn) this.setState({ checkedIn: true });
+    if (action.symptoms) this.setState({ selectedSymptoms: action.symptoms, symTime: this.clock() });
+    if (action.biteMin != null) this.setState({ biteTime: Component.biteAt(action.biteMin) });
+    if (action.biteTime) this.setState({ biteTime: action.biteTime });
+    if (action.keyAnswer && this.eng){
+      const a = action.keyAnswer, m = ID();
+      m.answer(this.eng, a.questionId, a.answer);
+      this.setState(s=>({ keyAnswers: s.keyAnswers.concat([a]), keyStep: s.keyStep + 1 }));
+      if (!m.nextQuestion(this.eng)){
+        // module has terminated: one dominant candidate -> confirmation card, several -> carousel
+        const r = m.result(this.eng);
+        this.setState({ seamB: true });
+        if (r.selectedSpeciesId || r.candidates.length === 1){
+          this.setState({ species: r.selectedSpeciesId || r.candidates[0].speciesId });
+          action.next = "confirm";
+        } else action.next = "species_results";
+      }
+    }
+    setTimeout(()=>this.enter(action.next), 260);
+  }
+
+  // Cold entry: the user attaches a snake photo from the composer with no menu context.
+  // Intent is unknown at this point, so it is asked AFTER the ID, not before.
+  attachPhoto(){ this.capture(false, ()=>this.attachPhotoGo()); }
+
+  attachPhotoGo(){
+    if (this.photoBusy) return;
+    this.photoBusy = true;
+    this.setState(s=>({ idMethod:"photo", intent:null, species:null, snakeUrl:s.photoUrl,
+      thread: s.thread.map(m => (m.t==="iact" && !m.done) ? { ...m, done:true } : m)
+        .concat([{ t:"userphoto", src:s.photoUrl }]) }));
+    setTimeout(()=>{
+      if (this.state.hasLoc){
+        this.setState(s=>({ thread: s.thread.concat([{ t:"note", text:"Analyzing the image\u2026 this may take a minute." }]) }));
+        setTimeout(()=>{ this.photoBusy = false; this.enter("species_results"); }, 1100);
+      } else setTimeout(()=>{ this.photoBusy = false; this.enter("photo_detected"); }, 450);
+    }, 500);
+  }
+
+  // "Pick a different spot" hands off to WhatsApp's own location picker. Design cannot
+  // render a map the user can pan inside a message, so the honest interaction is the
+  // native sheet: drop a pin or take a nearby place, both returning an inbound location.
+  openLocSheet(msg, action){ this.setState({ locSheet:{ msg, action } }); }
+  closeLocSheet(){ this.setState({ locSheet:null }); }
+  sendLoc(label){
+    const ls = this.state.locSheet; if (!ls) return;
+    this.setState(s=>({ locSheet:null, hasLoc:true,
+      thread: s.thread.map(x => x === ls.msg ? { ...x, done:true, picked:ls.action.title } : x)
+        .concat([{ t:"userloc", label }]) }));
+    setTimeout(()=>this.enter(ls.action.next), 420);
+  }
+
+  inputHint(){
+    const live = this.state.thread.filter(m=>m.t==="iact" && !m.done);
+    const last = live[live.length-1];
+    if (last){
+      if (last.kind === "checklist" && ((this.state.checkSel||{}).__other || (this.state.checkSel||{}).__otherB))
+        return last.data.otherHint || "Type what is happening\u2026";
+      if (last.data && last.data.hint) return last.data.hint;
+      if (last.data && last.data.rows && last.data.rows.some(r=>r.typeSpecies))
+        return "Type: \u201cblack mamba\u201d\u2026";
+      if (last.data && last.data.rows && last.data.rows.some(r=>r.typeHere))
+        return "Type: \u201cwaiting for an ambulance\u2026\u201d";
+    }
+    return "Type \u201csnake catcher\u201d\u2026";
+  }
+
+
+
+  sendTyped(){
+    const v = (this.state.inputValue||"").trim();
+    if (!v) return;
+    this.setState(s=>({ thread: s.thread.concat([{ t:"user", text:v }]), inputValue:"" }));
+    const last = [...this.state.thread].reverse().find(m=>m.t==="iact");
+    // a checklist with "Something else" ticked takes the typed symptom as a positive answer
+    if (last && !last.done && last.kind === "checklist" && ((this.state.checkSel||{}).__other || (this.state.checkSel||{}).__otherB)){
+      const d = last.data, sel = this.state.checkSel || {};
+      const picked = d.opts.filter((o,k)=>sel[k]);
+      const PRI = ["sym_breath","sym_ptosis","sym_dizzy","sym_spread","sym_local","sym_none"];
+      const worst = PRI.filter(k=>picked.some(o=>o.sym===k))[0];
+      this.pick(last, { title:d.button, echo:"", next:d.next,
+        neuro: picked.some(o=>o.neuro) || undefined, sym: worst,
+        symptoms: picked.map(o=>o.label).concat([v]) });
+      return;
+    }
+    // a list offering "type what is happening" accepts free text directly
+    if (last && !last.done && last.kind === "list" && last.data && last.data.rows &&
+        last.data.rows.some(r=>r.typeHere)){
+      this.setState(s=>({ thread: s.thread.map(m=> m===last ? { ...m, done:true } : m) }));
+      setTimeout(()=>this.setState(s=>({ thread: s.thread.concat([{ t:"bot", text:"Thank you \u2014 a SnakeIQ responder will follow up to make sure you\u2019re ok." }]) })), 320);
+      return;
+    }
+    if (last && !last.done && last.kind === "list" && last.data && last.data.rows &&
+        last.data.rows.some(r=>r.typeSpecies)){
+      const key = this.matchSpecies(v);
+      if (key){
+        this.setState(s2=>({ thread: s2.thread.map(m=> m===last ? { ...m, done:true } : m), species:key, seamB:true }));
+        setTimeout(()=>this.enter("confirm"), 320); return;
+      }
+    }
+    if (last && last.data && last.data.awaitText){
+      if (last.data.biteClock){
+        const t = this.parseClock(v);
+        if (t === null){
+          setTimeout(()=>this.setState(s2=>({ thread: s2.thread.concat([{ t:"bot", text:"I didn\u2019t catch a time. Reply like 14:15 \u2014 2:15 pm works too." }]) })), 320);
+          return;
+        }
+        if (t.ambiguous){
+          const a = t.ambiguous[0], b = t.ambiguous[1], nx = last.data.next;
+          this.setState(s2=>({ thread: s2.thread.map(m=> m===last ? { ...m, done:true } : m) }));
+          setTimeout(()=>this.setState(s2=>({ thread: s2.thread.concat([
+            { t:"bot", text:"Was that "+Component.fmt12(a)+" or "+Component.fmt12(b)+"?" },
+            { t:"iact", kind:"qr", actions:[
+              { title:Component.fmt12(a), echo:Component.fmt12(a), biteMin:a, next:nx },
+              { title:Component.fmt12(b), echo:Component.fmt12(b), biteMin:b, next:nx }
+            ]}
+          ]) })), 320);
+          return;
+        }
+        this.setState(s2=>({ thread: s2.thread.map(m=> m===last ? { ...m, done:true } : m),
+          biteTime: Component.biteAt(t.min) }));
+        setTimeout(()=>this.enter(last.data.next), 320);
+        return;
+      }
+      if (last.data.speciesName){
+        this.setState(s=>({ thread: s.thread.map(m=> m===last ? { ...m, done:true } : m) }));
+        const key = this.matchSpecies(v);
+        if (key){ this.setState({ species:key, seamB:true }); setTimeout(()=>this.enter("confirm"), 320); }
+        else setTimeout(()=>this.setState(s=>({ thread: s.thread.concat([{ t:"bot", text:"I don\u2019t know that name. Let\u2019s go back to the description questions." }]) }), ()=>this.enter("idkey")), 320);
+        return;
+      }
+      if (last.data.hospital){
+        this.setState({ hospital: v });
+        setTimeout(()=>this.enter("sc_hosp_confirm"), 320); return;
+      }
+      if (last.data.other){
+        setTimeout(()=>this.setState(s=>({ thread: s.thread.concat([{ t:"bot", text:"Thank you \u2014 a SnakeIQ responder will follow up to make sure you\u2019re ok." }]) })), 320);
+        return;
+      }
+      this.setState({ meds: v });
+      setTimeout(()=>this.enter("sc_meds_warn"), 320); return;
+    }
+    if (/snake\s*catcher|catcher/i.test(v)){ setTimeout(()=>this.enter("catcher_list"), 260); return; }
+    const key = this.matchSpecies(v);
+    if (key){ this.setState({ species:key, idMethod:"text" }); setTimeout(()=>this.enter("confirm"), 300); return; }
+    setTimeout(()=>this.setState(s=>({ thread: s.thread.concat([{ t:"bot", text:"Tap one of the buttons above so I can help you fastest." }]) })), 300);
+  }
+
+  // Confidence shown on the record is the same number the reporter saw: the photo-match
+  // score, or the module's own confidence when the species came from the key.
+  matchPct(){
+    const id = this.state.species;
+    if (!id) return null;
+    if (this.state.idMethod === "photo"){
+      const r = MOCK_PHOTO_MATCHES.filter(x=>x[0]===id)[0];
+      return r ? Math.round(r[1]*100) : null;
+    }
+    const m = ID();
+    if (m && this.eng){
+      const c = (m.result(this.eng).candidates || []).filter(x=>x.speciesId===id)[0];
+      if (c && c.confidence != null) return Math.round(c.confidence*100);
+    }
+    return null;
+  }
+
+  // Time entry, per spec: the prompt is in the locale's own format (South Africa writes
+  // 24-hour), but either notation is accepted. A bare 1–11 with no am/pm has two readings;
+  // when BOTH of them are in the past the bot asks which one rather than guessing, because
+  // a twelve-hour error in time-since-bite changes the clinical picture.
+  // Returns { min } when certain, { ambiguous:[a,b] } when not, null when unparseable.
+  parseClock(v){
+    const m2 = String(v).toLowerCase().match(/(\d{1,2})\s*[:.h]?\s*(\d{2})?\s*(am|pm|a\.m\.|p\.m\.)?/);
+    if (!m2) return null;
+    let H = parseInt(m2[1],10); const M = m2[2] ? parseInt(m2[2],10) : 0;
+    if (H > 23 || M > 59) return null;
+    const ap = m2[3] ? m2[3][0] : null;
+    const clamp = (t)=> t > CHAT_START_MIN ? Math.max(0, t - 720) : t;
+    if (ap){
+      if (ap === "p" && H < 12) H += 12;
+      if (ap === "a" && H === 12) H = 0;
+      return { min: clamp(H*60 + M) };
+    }
+    if (H === 0 || H > 12) return { min: clamp(H*60 + M) };   // only a 24-hour clock reads this way
+    if (H === 12) return { min: clamp(720 + M) };             // 12:xx typed bare is midday
+    const am = H*60 + M, pm = am + 720;
+    if (pm <= CHAT_START_MIN) return { ambiguous:[am, pm] };
+    return { min: am };
+  }
+
+  matchSpecies(v){
+    const s = v.toLowerCase();
+    if (/mamba|dendroaspis/.test(s)) return "mamba_black";
+    if (/cobra|naja/.test(s)) return "cobra_mozam";
+    if (/puff|adder|bitis/.test(s)) return "adder_puff";
+    if (/python/.test(s)) return "python_southern";
+    return null;
+  }
+
+  // ---------- seams ----------
+  // "Swelling spreading fast" / "spreading past the bite" is the swelling answer already.
+  spreadReported(){
+    return (this.state.selectedSymptoms || []).some(x=>/swelling/i.test(x) && /spread/i.test(x));
+  }
+
+  symId(){
+    const M = { critical:"sym_breath", neuro:"sym_ptosis", systemic:"sym_dizzy",
+      spread:"sym_spread", local:"sym_local", none:"sym_none" };
+    return this.state.symId || M[this.state.severity] || null;
+  }
+
+  // Seam A — Design → module. Emitted when "ID snake by description" is chosen.
+  seamAPayload(){
+    const sym = this.symId();
+    const payload = { sessionId: SESSION_ID, channel:"whatsapp", entryPoint:"id_by_description",
+      victim:"self",
+      location:{ lat:-34.0221, lng:20.4406, source:"device", label:"Swellendam, Western Cape" },
+      // Omitted entirely on the ID-only path: triage never ran, so there is nothing to assert.
+      // Buckets and ids only — no derived minute count. Interpreting elapsed time is the module's job.
+      syndromicPriors: sym
+        ? { primarySymptom: sym,
+            timeSinceBite: this.state.biteTime ? this.state.biteTime.id : null,
+            rawAnswers:[{ questionId:"snakeiq_symptoms", answer: sym }]
+              .concat(this.state.biteTime ? [{ questionId:"snakeiq_bite_time", answer:this.state.biteTime.id }] : []) }
+        : null };
+    if (!sym) delete payload.syndromicPriors;
+    return payload;
+  }
+  // Seam B — module → Design. Design renders it; it never derives any of it.
+  seamBPayload(){
+    const m = ID(); if (!m) return {};
+    const bt = this.state.biteTime ? this.state.biteTime.id : null;
+    const elapsed = (bt && m.ELAPSED[bt] !== undefined) ? m.ELAPSED[bt] : 0;
+    const mk = (id, conf) => { const s = m.byId(id);
+      return { speciesId:s.speciesId, commonName:s.commonName, scientificName:s.scientificName,
+        confidence:conf, venomStatus:s.venomStatus, venomStatusLabel:s.venomStatusLabel,
+        syndromeClass:s.syndromeClass, antivenom:s.antivenom, alertIntervalMin:s.alertIntervalMin,
+        cadenceBasis:s.cadenceBasis, firstAid:s.firstAid, careLevel:s.careLevel, tier:s.tier, notes:s.notes }; };
+    let base;
+    if (this.state.idMethod === "key" && this.eng){
+      base = m.result(this.eng);
+      base.source = "adaptive_key";
+    } else {
+      base = { sessionId: SESSION_ID, confirmed:false, selectedSpeciesId:null,
+        candidates: MOCK_PHOTO_MATCHES.map(x=>mk(x[0], x[1])),
+        caseContext:{ primarySymptom:this.symId(), timeSinceBite:bt, victim:"self",
+          location:{ lat:-34.0221, lng:20.4406, label:"Swellendam, Western Cape" } },
+        firstCheckDueMin:null, source:"photo_match", handBackTo:"find_antivenom" };
+    }
+    if (this.state.species){
+      const sel = base.candidates.filter(c=>c.speciesId === this.state.species)[0] || mk(this.state.species, null);
+      base = { ...base, confirmed:true, selectedSpeciesId:sel.speciesId, candidates:[sel],
+        firstCheckDueMin: Math.max(0, sel.alertIntervalMin - elapsed) };
+    } else if (base.firstCheckDueMin === null && base.candidates.length){
+      base.firstCheckDueMin = Math.max(0, base.candidates[0].alertIntervalMin - elapsed);
+    }
+    return base;
+  }
+
+  // ---------- twilio payload builders ----------
+  mkChecks(list){ return list.map(x => ({ ...x, ok: x.len <= x.limit })); }
+
+  buildState(id){
+    const C = Component.C;
+    const intent = this.state.intent;
+    const sp = SP(this.state.species || "mamba_black");
+
+    switch(id){
+
+      case "welcome": return {
+        msgs: [{ t:"bot", text:"Hi. This is the SnakeIQ WhatsApp chatbot.\n\nI can help you to quickly get the right help for a snake bite." }],
+        iact: { t:"iact", kind:"qr", actions:[
+          { title:"Snake bite", intent:"bite", next:"firstaid1" },
+          { title:"Snake spit in eye", intent:"spit", next:"spit_firstaid" },
+          { title:"ID a snake", intent:"id", next:"id_prompt" }
+        ]},
+        turn: { title:"Welcome menu", payloads:[ this.qr("snakeiq_welcome",
+          "Hi. This is the SnakeIQ WhatsApp chatbot.\n\nI can help you to quickly get the right help for a snake bite.",
+          [["Snake bite","intent_bite"],["Snake spit in eye","intent_spit"],["ID a snake","intent_id"]], "IS","\u2014") ] }
+      };
+
+      // Location is asked after the ID attempt — it is only needed to route to a facility,
+      // so nothing blocks the photo. Where it leads depends on whether a species is known.
+      case "loc_bite": {
+        const nxt = (this.state.species && sp.venom) ? "firstaid2" : "hospital";
+        const body = "Share your location to find the nearest antivenom.";
+        return {
+          msgs: [],
+          iact: { t:"iact", kind:"location", actions:[
+            { title:"Send current location", next:nxt },
+            { title:"Pick a different spot", echo:"Picked a location on the map", next:nxt }
+          ], data:{ body } },
+          turn: { title:"Location request \u00b7 antivenom", payloads:[ this.loc("snakeiq_location_bite", body) ] }
+        };
+      }
+
+      // Asked the moment the photo lands: the analysis wait is dead time, and the module
+      // uses the location to weight candidates by local range.
+      case "loc_photo": {
+        const body = "Got your photo \u2014 looking for a match \u2026\n\nShare where you are while I find a match.\n\n\u2022 This helps me to match with snakes that live in this area\n\u2022 And it lets me help you find the nearest medical care";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"location", actions:[
+            { title:"Send current location", next:"species_results" },
+            { title:"Pick a different spot", echo:"Picked a location on the map", next:"species_results" }
+          ], data:{ body:"Share your location to narrow the ID and find care." } },
+          turn: { title:"Location request \u00b7 during photo analysis", payloads:[ this.loc("snakeiq_location_photo",
+            "Share your location to narrow the ID and find care.") ] }
+        };
+      }
+
+      // Unprompted photo from the composer: confirm it is a snake, then buy the analysis
+      // wait back by asking for location, which also weights candidates by local range.
+      case "photo_detected": {
+        const body = "That\u2019s a snake \u2014 looking for a match \u2026\n\nShare where you are while I find a match.\n\n\u2022 This helps me to match with snakes that live in this area\n\u2022 And it lets me help you find the nearest medical care";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"location", actions:[
+            { title:"Send current location", next:"species_results" },
+            { title:"Pick a different spot", echo:"Picked a location on the map", next:"species_results" }
+          ], data:{ body:"Share your location to narrow the ID and find care." } },
+          turn: { title:"Inbound media \u00b7 unprompted photo", payloads:[ this.loc("snakeiq_location_photo_cold",
+            "Share your location to narrow the ID and find care.") ] }
+        };
+      }
+
+      // The composer photo carries no intent, so the bite question waits until the species
+      // is known; from there every bite goes through First aid 1.
+      case "bite_from_photo": return this.buildState("firstaid1");
+
+      // ---------- First aid 1 ----------
+      // Fires as soon as a bite is known, before and independently of any ID: treatment
+      // does not wait for a species. Content is CMS data, not Design copy \u2014 so a species
+      // with no First aid 1 entry skips the turn and the flow continues to care.
+      case "firstaid1": {
+        const fa = FA1(this.state.species);
+        // Before an ID the flow still needs one; after one, the species turn follows so the
+        // handling instruction (sp.immob, the incapacitation warning) is never route-dependent.
+        // Position 2 dedupes against fa1Shown, so the flag is set BEFORE the tail is built.
+        const tailId = !this.state.species ? "id_prompt"
+          : !sp.venom ? "nv_symptoms"
+          : "firstaid2";
+        if (!fa) return this.buildState(tailId);
+        this.fa1Shown = true;
+        const tail = this.buildState(tailId);
+        return {
+          msgs: [{ t:"bot", text:fa.body }].concat(tail.msgs),
+          iact: tail.iact,
+          turn: { title:"First aid 1 \u00b7 " + (fa.species ? fa.id + " entry" : "generic entry"),
+            payloads: [ this.text("snakeiq_firstaid1_" + fa.id, fa.body, "IS", "\u2014",
+              "First aid 1 is CMS content keyed by species, not Design copy: the body above is rendered verbatim from the entry for " + fa.id + ". An unidentified bite takes the generic entry; a species whose First aid 1 entry is empty produces no turn at all \u2014 the flow goes straight on to care rather than showing filler.") ].concat(tail.turn.payloads) }
+        };
+      }
+
+      case "bite_time": {
+        const body = "*What time were you bitten?*\nYou started this chat at " + Component.fmt24(CHAT_START_MIN)
+          + "\n\nJust type and send the time.";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"await", data:{ awaitText:true, biteClock:true, next:"sc_enroute", hint:"Type a time, e.g. 14:15\u2026" }},
+          turn: { title:"Time of bite (free-text time, asked during navigation)", payloads:[ this.timeq("snakeiq_bite_time", body) ] }
+        };
+      }
+
+      case "loc_id": return {
+        msgs: [],
+        iact: { t:"iact", kind:"location", actions:[
+          { title:"Send current location", next:"catcher_list" },
+          { title:"Pick a different spot", echo:"Picked a location on the map", next:"catcher_list" }
+        ], data:{ body:"Share your location to find a snake catcher near you." } },
+        turn: { title:"Location request \u00b7 snake catcher", payloads:[ this.loc("snakeiq_location_id",
+          "Share your location to find a snake catcher near you.") ] }
+      };
+
+      case "spit_firstaid": return {
+        msgs: [{ t:"bot", text:"Rinse the eye now \u2014 don\u2019t wait.\n\n\u2022 Flush with clean water or saline for 15\u201320 minutes.\n\u2022 Hold the eyelid open; roll the eye around.\n\u2022 Remove contact lenses if present.\n\u2022 Do not rub the eye.\n\nWas anyone also bitten?" }],
+        iact: { t:"iact", kind:"qr", actions:[
+          { title:"No one was bitten", next:"spit_location" },
+          { title:"Someone was bitten", intent:"bite", next:"firstaid1" }
+        ]},
+        turn: { title:"Spit \u2192 Position 1 first aid", payloads:[
+          this.qr("snakeiq_spit_position1", "Rinse the eye now \u2014 don\u2019t wait.\n\n\u2022 Flush with clean water or saline for 15\u201320 minutes.\n\u2022 Hold the eyelid open; roll the eye around.\n\u2022 Remove contact lenses if present.\n\u2022 Do not rub the eye.\n\nWas anyone also bitten?",
+            [["No one was bitten","spit_nobite"],["Someone was bitten","spit_bite"]], "IS","\u2014")
+        ]}
+      };
+
+      case "spit_location": return {
+        msgs: [],
+        iact: { t:"iact", kind:"location", actions:[
+          { title:"Send current location", next:"hospital_eye" },
+          { title:"Pick a different spot", echo:"Picked a location on the map", next:"hospital_eye" }
+        ], data:{ body:"No antivenom is needed for venom in the eye, and it doesn\u2019t matter which snake it was \u2014 the treatment is the same. Share your location for the nearest eye care." } },
+        turn: { title:"Spit \u2192 location request", payloads:[
+          this.loc("snakeiq_location_spit", "No antivenom is needed for venom in the eye, and it doesn\u2019t matter which snake it was \u2014 the treatment is the same. Share your location for the nearest eye care.")
+        ]}
+      };
+
+      case "hospital_eye": return {
+        msgs: [{ t:"bot", text:"Nearest facilities that can treat a venom eye injury. Keep irrigating the eye while you travel." }],
+        iact: { t:"iact", kind:"list", data:{ map:true, button:"Choose facility", rows:[
+          { title:"Swellendam Provincial Hospital", desc:"Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km"), next:"eye_directions", echo:"Swellendam Provincial Hospital" },
+          { title:"Mediclinic Worcester", desc:"Private hospital \u00b7 "+this.km("worcester","128 km")+" \u00b7 Ophthalmologist on call", next:"eye_directions", echo:"Mediclinic Worcester" }
+        ]}},
+        turn: { title:"Eye-care facility (list-picker)", payloads:[ this.list("snakeiq_hospital_eye",
+          "Nearest facilities that can treat a venom eye injury. Keep irrigating the eye while you travel.", "Choose facility",
+          [["Swellendam Provincial Hospital","Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km"),"eye_swellendam_prov"],
+           ["Mediclinic Worcester","Private hospital \u00b7 "+this.km("worcester","128 km")+" \u00b7 Ophthalmologist on call","eye_mediclinic"]],
+          true) ] }
+      };
+
+      case "eye_directions": return {
+        msgs: [],
+        iact: { t:"iact", kind:"card", data:{ map:true, title:"Swellendam Provincial Hospital", body:"18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nEye casualty on site \u2014 no antivenom required.", tag:null },
+          actions:[{ title:"Open in Google Maps", url:true, href:this.mapsUrl("swellendam"), echo:null, next:"__none" }] },
+        turn: { title:"Eye-care directions card", payloads:[ this.cardUrl("snakeiq_directions_eye", "Swellendam Provincial Hospital",
+          "18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nEye casualty on site \u2014 no antivenom required.", [["Open in Google Maps",this.mapsUrl("swellendam"),"URL"]]) ] }
+      };
+
+      case "id_prompt": {
+        // No bite means no clock, so the description key is offered outright. On a bite the
+        // key is not offered at all: it is the slowest route to an uncertain answer, and
+        // treatment does not wait for a species. That slot carries the care escape instead.
+        const bitten = intent === "bite" || intent === "spit";
+        const third = bitten
+          ? { title:"No photo, snake is gone", next: this.state.hasLoc ? "hospital" : "loc_bite" }
+          : { title:"ID by description", method:"key", next:"idkey" };
+        const acts = [
+          { title:"Take a photo", method:"photo", echo:"[Photo]", next:"__photo" },
+          { title:"Use existing photo", method:"photo", echo:"[Photo]", next:"__photo" },
+          third
+        ];
+        const btns = [["Take a photo","id_photo_new"],["Use existing photo","id_photo_lib"],
+          [third.title, bitten ? "id_no_photo" : "id_desc"]];
+        return {
+          msgs: [{ t:"bot", text: bitten ? ID_PROMPT_COPY : ID_PROMPT_COPY_NOBITE }],
+          iact: { t:"iact", kind:"qr", actions:acts },
+          turn: { title:"ID prompt" + (bitten ? "" : " \u00b7 no-bite intent"), payloads:[ this.qr("snakeiq_id_prompt" + (bitten ? "" : "_nobite"), bitten ? ID_PROMPT_COPY : ID_PROMPT_COPY_NOBITE, btns, "IS","\u2014",
+            "A photo is the best ID, so both photo routes lead. The third option differs by intent: with no bite the description key is reached in one tap, because nothing is time-critical and the key is the only other way to an answer. On a bite the key is not offered at all \u2014 answering twenty questions is the slowest route to an uncertain answer and treatment does not wait for a species, so the slot goes straight to care. The distance warning sits in the body rather than on the button, where there is no room for it: the instruction that keeps someone safe cannot be the thing that gets truncated.") ] }
+        };
+      }
+
+      // Adaptive key — the module chooses the node, the wording, the options and the
+      // component. Design renders the object and posts the chosen value back.
+      case "idkey": {
+        const m = ID();
+        const q = (m && this.eng) ? m.nextQuestion(this.eng) : null;
+        if (!q) return this.buildState("species_results");
+        const label = "ID key \u00b7 " + q.questionId + " (module step " + q.step + ")";
+        // liveCandidates counts only species past the module's 5% plausibility cut, which
+        // nothing clears while the description is still vague — so the honest sentence
+        // reports both numbers rather than the one that reads as zero.
+        const consistent = q.weightedCandidates != null ? q.weightedCandidates : q.liveCandidates;
+        const note = "Module-owned adaptive key. The engine chose this node because it discriminates among the "
+          + consistent + " species still consistent with the description \u2014 "
+          + q.liveCandidates + " of them past the 5% plausibility cut (split gain " + q.gain
+          + "); nodes that cannot change the ranking are skipped, which is why the key is short. Component follows the option count: "
+          + q.options.length + " \u2192 " + q.inputType + ". Priors reweight, never eliminate \u2014 a deadly species keeps a floor while the description stays ambiguous.";
+        const lbl = (o)=> (KEY_LABEL[q.questionId] && KEY_LABEL[q.questionId][o.value]) || o.label;
+        if (q.inputType === "list_picker"){
+          const TYPE_ROW = ["I know the species","I can tell you the name of the species right now (type below)","key_type_species"];
+          const first = !this.typeRowShown;
+          if (first) this.typeRowShown = true;
+          const rows = q.options.map(o=>(
+            { title:lbl(o), desc:"", next:"idkey", echo:lbl(o), vis:keyVisual(q.questionId, o.value),
+              keyAnswer:{ questionId:q.questionId, answer:o.value } }));
+          if (first) rows.push({ title:TYPE_ROW[0], desc:TYPE_ROW[1], next:"id_type_species",
+            echo:TYPE_ROW[0], typeSpecies:true, noChevron:true });
+          const plRows = q.options.map(o=>[lbl(o), "", o.value]);
+          if (first) plRows.push(TYPE_ROW);
+          const kb = KEY_BUTTON.hasOwnProperty(q.questionId) ? KEY_BUTTON[q.questionId] : q.button;
+          return {
+            msgs: [{ t:"bot", text:q.prompt }],
+            iact: { t:"iact", kind:"list", data:{ map:false, button:kb, rows } },
+            turn: { title:label, payloads:[ this.list("snakeiq_"+q.questionId, q.prompt, kb,
+              plRows, false, true, note + (first ? " The first list also offers a naming escape hatch \u2014 a user who already knows the species should never be walked through the key." : "")) ] }
+          };
+        }
+
+        
+        return {
+          msgs: [{ t:"bot", text:q.prompt }],
+          iact: { t:"iact", kind:"qr", actions: q.options.map(o=>(
+            { title:lbl(o), next:"idkey", vis:keyVisual(q.questionId, o.value),
+              keyAnswer:{ questionId:q.questionId, answer:o.value } })) },
+          turn: { title:label, payloads:[ this.qr("snakeiq_"+q.questionId, q.prompt,
+            q.options.map(o=>[lbl(o), o.value]), "IS","\u2014", note) ] }
+        };
+      }
+
+      case "id_type_species": return {
+        msgs: [{ t:"bot", text:"What snake was it? Type the common or scientific name." }],
+        iact: { t:"iact", kind:"await", data:{ awaitText:true, speciesName:true, hint:"Type the species name\u2026" }},
+        turn: { title:"Named species \u00b7 free text", payloads:[ this.text("snakeiq_id_type_species",
+          "What snake was it? Type the common or scientific name.", "IS","\u2014") ] }
+      };
+
+      case "species_results": {
+        const photo = this.state.idMethod === "photo";
+        const m = ID();
+        const ranked = photo
+          ? MOCK_PHOTO_MATCHES.map(x=>({ id:x[0], match:Math.round(x[1]*100) }))
+          : ((m && this.eng) ? m.result(this.eng).candidates.map(c=>({ id:c.speciesId,
+              match: c.confidence == null ? null : Math.round(c.confidence*100) })) : []);
+        const cards = ranked.map(r=>{
+          const s = SP(r.id);
+          return { img:SP_IMG(r.id), sid:r.id, title:s.name, sub:s.sci, tag:s.status,
+                   match: r.match, low: r.match != null && r.match < 80,
+                   action:{ title:"Select", echo:"Selected: "+s.name, species:r.id, next:"confirm" } };
+        });
+        const body = photo
+          ? "\u2705 Great, I\u2019ve got your location.\n\nNow here are the closest matches to your photo.\n\nTap the \u201cSelect\u201d button under the picture of the snake that bit you."
+          : "Closest matches from the local key. Tap Select on the snake you saw.";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"carousel", data:{ cards } },
+          turn: { title:"Species results (carousel)", payloads:[ this.carousel(cards, body) ] }
+        };
+      }
+
+      case "confirm": {
+        const avNext = sp.venom ? "firstaid2" : "hospital";
+        const locNext = (n)=> this.state.hasLoc ? n : "loc_bite";
+        let actions, payloadBtns, ct="";
+        if (!intent || intent === "id"){
+          // ID is done, purpose is not: neither the composer photo nor "ID a snake"
+          // has told us whether anyone was hurt. Ask it once, here.
+          actions = [
+            { title:"Someone was bitten", intent:"bite", next:"bite_from_photo" },
+            { title:"Snake spit in eye", intent:"spit", next:"spit_firstaid" },
+            { title:"More about this snake", next:"more_about" }
+          ];
+          payloadBtns = [["Someone was bitten","photo_bite","QUICK_REPLY"],["Snake spit in eye","photo_spit","QUICK_REPLY"],["More about this snake","photo_info","QUICK_REPLY"]];
+        } else if (intent === "bite" && !sp.venom){
+          // A non-venomous ID does not close the case: the ID can be wrong, so the
+          // syndromic questions decide whether this still becomes a hospital case.
+          actions = [{ title:"Check symptoms", next:"nv_symptoms" }];
+          payloadBtns = [["Check symptoms","nv_check","QUICK_REPLY"]];
+        } else if (intent === "bite"){
+          actions = [{ title:"find a hospital with antivenom", next:locNext(avNext) }];
+          payloadBtns = [["find a hospital with antivenom","find_av","QUICK_REPLY"]];
+        } else if (intent === "spit"){
+          actions = [{ title:"Find Hospital", next:locNext("hospital") }];
+          payloadBtns = [["Find Hospital","find_hosp","QUICK_REPLY"]];
+        } else {
+          actions = [
+            { title:"Take new photo", method:"photo", echo:"[Photo]", next:"__photo" },
+            { title:"More about this snake", next:"more_about" },
+            { title:"Contact snake catcher", next: this.state.hasLoc ? "catcher_list" : "loc_id" }
+          ];
+          payloadBtns = [["Take new photo","re_photo","QUICK_REPLY"],["More about this snake","more_info","QUICK_REPLY"],["Contact snake catcher","catcher","QUICK_REPLY"]];
+        }
+        // Venom status is a fact about the species, not a probability — it comes from the
+        // module verbatim. Any doubt belongs to the ID, so the hedge sits on the ID line.
+        const src = this.state.idMethod === "photo" ? "Based on your photo."
+          : this.state.idMethod === "key" ? "Based on your answers." : "";
+        const local = LOCAL_NAMES[sp.sid] || [];
+        const body = (local.length ? local.join("\n") + "\n" : "") + sp.sci + (src ? "\n\n" + src : "");
+        const noIntent = !intent || intent === "id";
+        // Nobody has said a bite happened yet, so the card cannot tell anyone to seek care.
+        // The unanswered question is the emphasis instead.
+        const ask = noIntent ? "Was anyone bitten or spat on?" : null;
+        const emph = (!noIntent && sp.venom) ? "Go to the hospital now" : null;
+        return {
+          msgs: [],
+          iact: { t:"iact", kind:"card", data:{ img:SP_IMG(sp.sid), title:sp.name, body, ask, emph, tag: sp.venom?"Venomous/Giftig":null }, actions },
+          turn: { title:"Species confirmation \u2014 "+(intent||"unprompted photo"), payloads:[ this.card("snakeiq_confirm_"+(intent||"photo"), sp.name,
+            body+(ask?"\n\n*"+ask+"*":"")+(emph?" *"+emph+"*":""), payloadBtns, {},
+            "Venom status is rendered verbatim from Seam B\u2019s venomStatusLabel \u2014 Design does not soften or grade it. Uncertainty belongs to the identification (match confidence, LOW CONFIDENCE chip, \u201cBased on your photo\u201d), never to the venom fact.") ] }
+        };
+      }
+
+      case "firstaid2": {
+        const rec2 = ID() ? ID().byId(this.state.species || "mamba_black") : null;
+        const neuroSp = !!rec2 && (rec2.syndromeClass === "neurotoxic" || rec2.syndromeClass === "mixed");
+        const incapB = neuroSp ? "\u2022 You may become disoriented.\n" : "";
+        // First aid 1 has already given the steps that apply to any bite. Repeating them
+        // here reads as a second, competing instruction, so Position 2 narrows to the
+        // species delta \u2014 what this snake changes about the handling.
+        const said = !!this.fa1Shown;
+        const aid = sp.fast
+          ? sp.name+" venom acts fast. Don\u2019t wait for symptoms, get help now.\n\n"
+            +incapB
+            +(said ? "" : "\u2022 Keep calm. Movement spreads venom\n")
+            +"\u2022 "+sp.immob
+            +(said ? "" : "\n\u2022 Do NOT cut or suck the bite")
+            +"\n\u2022 Go to a hospital with antivenom immediately"
+          : "First aid for a "+sp.name+" bite.\n\n"
+            +incapB
+            +(said ? "" : "\u2022 Keep calm. Movement spreads venom\n")
+            +"\u2022 "+sp.immob
+            +"\n\u2022 Remove rings and tight clothing near the bite"
+            +(said ? "" : "\n\u2022 Do NOT cut or suck the bite");
+        const hosp = this.buildState("hospital");
+        return {
+          msgs: [{ t:"bot", text:aid }].concat(hosp.msgs),
+          iact: hosp.iact,
+          turn: { title:"Bite \u2192 Position 2 first aid + hospital list", payloads:[
+            this.text("snakeiq_bite_position2_"+this.state.species, aid, "IS","\u2014"),
+            hosp.turn.payloads[0]
+          ]}
+        };
+      }
+
+      case "hospital": {
+        const av = this.state.species && sp.av && sp.av.required ? sp.av.product : null;
+        const hbody = av
+          ? "For a " + sp.name + ", you need a " + av.toLowerCase() + " antivenom treatment.\n\nHere are the hospitals nearest you that have this available.\n\nTap on a hospital to get directions"
+          : "No specific antivenom specified, these are the nearest facilities with any antivenom. Tap one for directions.";
+        return {
+        msgs: [{ t:"bot", text:hbody }],
+        iact: { t:"iact", kind:"list", data:{ map:true, button:"Choose hospital", rows:[
+          { title:"Swellendam Provincial Hospital", desc:"Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km")+" \u00b7 " + (av || "Antivenom") + " in stock", next:"hospital_directions", echo:"Swellendam Provincial Hospital" },
+          { title:"Otto du Plessis Hospital", desc:"Govt Hospital \u00b7 Bredasdorp \u00b7 "+this.km("otto","72 km")+" \u00b7 Limited stock", next:"hospital_directions", echo:"Otto du Plessis Hospital" }
+        ]}},
+        turn: { title:"Hospital selection (list-picker)", payloads:[ this.list("snakeiq_hospital",
+          hbody, "Choose hospital",
+          [["Swellendam Provincial Hospital","Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km")+" \u00b7 " + (av || "Antivenom") + " in stock","hosp_swellendam_prov"],
+           ["Otto du Plessis Hospital","Govt Hospital \u00b7 Bredasdorp \u00b7 "+this.km("otto","72 km")+" \u00b7 Limited stock","hosp_ottoduplessis"]],
+          true, false,
+          av ? "Antivenom product comes from Seam B (antivenom.product) \u2014 Design names it but never decides it. Stock figures are facility data (Seam C, not built)." : undefined) ] }
+      };
+      }
+
+      case "hospital_directions": return {
+        msgs: [],
+        iact: { t:"iact", kind:"card", data:{ map:true, title:"Swellendam Provincial Hospital", body:"18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nAntivenom confirmed in stock.", tag:null },
+          actions:[{ title:"Open in Google Maps", url:true, partBreak:true, href:this.mapsUrl("swellendam"), echo:null, next:"__none" }] },
+        turn: { title:"Directions card", payloads:[ this.cardUrl("snakeiq_directions", "Swellendam Provincial Hospital",
+          "18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nAntivenom confirmed in stock.", [["Open in Google Maps",this.mapsUrl("swellendam"),"URL"]]) ] }
+      };
+
+      // ---------- non-venomous bite: syndromic screen decides hospital vs wound care ----------
+      case "nv_symptoms": {
+        const body = "A " + sp.name + " bite is not venomous, but an ID can be wrong. Which of these are happening now?";
+        const opts = [
+          { label:"Swelling spreading past the bite", sym:"sym_spread" },
+          { label:"Severe or worsening pain", sym:"sym_local" },
+          { label:"Bleeding that will not stop", sym:"sym_spread" },
+          { label:"Drooping eyelids or blurred vision", neuro:true, sym:"sym_ptosis" },
+          { label:"Numbness, tingling or dizziness", neuro:true, sym:"sym_dizzy" },
+          { label:"Trouble breathing or swallowing", sym:"sym_breath" }
+        ];
+        const note = "Runs only on a non-venomous ID with a reported bite. The ID is a probability, not a diagnosis, so the syndromic screen is the safety net: any positive sign overrides the ID and the case becomes a hospital case. Nothing here is scored by Design \u2014 the signs are the guideline\u2019s envenoming indicators, and the route is binary (any positive \u2192 facility). A symptom we did not list is still a positive, so the screen carries a free-text row: ticking \u201cSomething else\u201d switches the turn to the composer and the typed line is sent through as a reported sign. \u201cNone of these\u201d is an explicit row rather than an empty Continue, so a non-answer is never read as no symptoms.";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"checklist", data:{ opts, button:"Continue", none:"None of these",
+            other:"Something else \u2014 I\u2019ll describe it", otherEcho:"Something else",
+            otherHint:"Type: \u201cthe skin around the bite is going dark\u201d\u2026",
+            next:"nv_positive", noneNext:"nv_wound_care" }, reset:true },
+          turn: { title:"Non-venomous bite \u00b7 syndromic screen", payloads:[
+            this.list("snakeiq_nv_symptoms", body, "Continue", opts.map((o,k)=>[o.label, "", "nv_sym_"+k]), false, true, note)
+          ]}
+        };
+      }
+
+      case "nv_positive": {
+        const body = "What you describe can be a sign of envenoming. The ID may be wrong \u2014 treat this as a venomous bite.\n\n\u2022 Keep still and calm; movement spreads venom.\n\u2022 Keep the bitten limb still.\n\u2022 Do NOT cut or suck the bite.\n\nGo to a hospital now.";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"qr", actions:[{ title:"Find hospital", next: this.state.hasLoc ? "hospital" : "loc_bite" }]},
+          turn: { title:"Non-venomous ID overridden by symptoms", payloads:[ this.qr("snakeiq_nv_positive", body,
+            [["Find hospital","nv_hosp"]], "IS","\u2014",
+            "A positive sign outranks the ID. The message says plainly that the ID may be wrong \u2014 hedging here would read as reassurance.") ] }
+        };
+      }
+
+      case "nv_wound_care": {
+        // The route in decides how the ID is described \u2014 we never claim more certainty than its source.
+        const idSrc = this.state.idMethod === "photo" ? "the photo ID is a non-venomous snake"
+          : this.state.idMethod === "key" ? "your description points to a non-venomous snake"
+          : "the ID is a non-venomous snake";
+        const body = "You haven\u2019t reported any of those signs, and " + idSrc + " \u2014 so for now, treat the bite as a wound.\n\n\u2022 Wash the bite with clean water and soap.\n\u2022 Cover it with a clean dressing.\n\u2022 Keep it clean and watch it for infection.\n\u2022 See a clinic about a tetanus shot.\n\nMessage me if swelling, pain, bleeding, dizziness or trouble breathing starts.";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"qr", actions:[{ title:"Symptoms have started", next:"nv_symptoms" }]},
+          turn: { title:"Non-venomous bite \u00b7 wound care (terminal)", payloads:[ this.qr("snakeiq_nv_wound_care", body,
+            [["Symptoms have started","nv_recheck"]], "IS","\u2014",
+            "Terminal, but re-enterable: the screen can be run again at any point, because envenoming can declare itself hours later. The copy never asserts that there are no signs of envenoming \u2014 we only have the victim\u2019s own report and a photo ID, so it says exactly that, and the watch-and-message line carries the rest.") ] }
+        };
+      }
+
+      case "more_about": return {
+        msgs: [{ t:"bot", text:sp.name+" ("+sp.sci+"). "+sp.about }],
+        iact: { t:"iact", kind:"qr", actions:[{ title:"Contact snake catcher", next:"catcher_list" }]},
+        turn: { title:"Species info", payloads:[ this.qr("snakeiq_species_info",
+          sp.name+" ("+sp.sci+"). "+sp.about, [["Contact snake catcher","catcher"]], "IS","\u2014") ] }
+      };
+
+      case "catcher_list": return {
+        msgs: [{ t:"bot", text:"Registered snake catchers near you. Tap to call \u2014 the number opens directly." }],
+        iact: { t:"iact", kind:"list", data:{ map:false, button:"View catchers", rows:[
+          { title:"Wynand Basson", desc:"Swellendam \u00b7 +27 82 761 2345", next:"catcher_done", echo:"Wynand Basson" },
+          { title:"Chanel September", desc:"Barrydale \u00b7 +27 82 769 8765", next:"catcher_done", echo:"Chanel September" },
+          { title:"Sipho Mgcina", desc:"Riversdale \u00b7 +27 82 765 1122", next:"catcher_done", echo:"Sipho Mgcina" }
+        ]}},
+        turn: { title:"Snake catcher directory (list-picker)", payloads:[ this.list("snakeiq_catchers",
+          "Registered snake catchers near you. Tap to call \u2014 the number opens directly.", "View catchers",
+          [["Wynand Basson","Swellendam \u00b7 +27 82 761 2345","catcher_wynand"],
+           ["Chanel September","Barrydale \u00b7 +27 82 769 8765","catcher_chanel"],
+           ["Sipho Mgcina","Riversdale \u00b7 +27 82 765 1122","catcher_sipho"]],
+          false, true) ] }
+      };
+
+      case "catcher_done": return {
+        msgs: [{ t:"bot", text:"Calling now. Stay on the line and keep your distance from the snake until help arrives." }],
+        iact: null,
+        turn: { title:"Catcher connect", payloads:[ this.text("snakeiq_catcher_call",
+          "Calling now. Stay on the line and keep your distance from the snake until help arrives.", "IS","\u2014") ] }
+      };
+
+      case "symptom_alert": return {
+        msgs: [{ t:"pnote", text: Component.PROTO_NOTE }],
+        iact: { t:"iact", kind:"qr", data:{ oos:true }, actions:[
+          { title:"OK", next:"bite_time" },
+          { title:"Not now", next:"sc_dismissed" }
+        ]},
+        turn: { title:"S-0 Symptom check alert \u00b7 currentStep 9.1", payloads:[ this.qrTmpl("snakeiq_sc_alert",
+          Component.ALERT_BODY,
+          [["OK","sc_alert_ok"],["Not now","sc_alert_later"]],
+          {}) ] }
+      };
+
+      // S-1 dismissed
+      case "sc_dismissed": return {
+        msgs: [{ t:"bot", text:"Tell us your symptoms as soon as you can." }],
+        // Dismissing the alert must not end the thread: the check is still owed, and the
+        // way back has to be one tap rather than a message the victim has to compose.
+        iact: { t:"iact", kind:"qr", actions:[{ title:"Report symptoms", next:"sc_who" }]},
+        turn: { title:"S-1 Alert dismissed \u2014 way back stays open", payloads:[ this.qr("snakeiq_sc_dismissed",
+          "Tell us your symptoms as soon as you can.", [["Report symptoms","sc_report"]], "IS","\u2014",
+          "Not a terminal turn any more. The quick reply re-enters the symptom check at the victim/bystander question, so a dismissed alert costs one tap to recover.") ] }
+      };
+
+      // S-3 en-route status
+      case "sc_enroute": {
+        const body = "Are you still on your way to "+this.state.hospital+" or have plans changed?";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"qr", actions:[
+            { title:"Still on my way", next:"sc_who" },
+            { title:"Different hospital", next:"sc_hosp_list" },
+            { title:"Plans have changed", next:"sc_edge" }
+          ]},
+          turn: { title:"S-3 En-route status \u00b7 currentStep 10", payloads:[ this.qrTmpl("snakeiq_sc_enroute",
+            "Are you still on your way to {{1}} or have plans changed?",
+            [["Still on my way","sc_enroute_yes"],["Different hospital","sc_enroute_change"],["Plans have changed","sc_enroute_stop"]],
+            { "1": this.state.hospital }) ] }
+        };
+      }
+
+      // S-3b hospital change
+      case "sc_hosp_list": return {
+        msgs: [{ t:"bot", text:"Which one?" }],
+        iact: { t:"iact", kind:"list", data:{ map:true, button:"Choose hospital", rows:[
+          { title:"Swellendam Provincial Hospital", desc:""+this.km("swellendam","3 km")+" \u00b7 142 vials \u00b7 +27 28 514 1141", hospital:"Swellendam Provincial Hospital", next:"sc_who", echo:"Swellendam Provincial Hospital" },
+          { title:"Otto du Plessis Hospital", desc:""+this.km("otto","72 km")+" \u00b7 24 vials \u00b7 +27 28 425 1140", hospital:"Otto du Plessis Hospital", next:"sc_who", echo:"Otto du Plessis Hospital" },
+          { title:"A different hospital", desc:"Type the name of the facility", next:"sc_hosp_custom", echo:"A different hospital" }
+        ]}},
+        turn: { title:"S-3b Hospital list \u00b7 currentStep 10.5", payloads:[ this.list("snakeiq_sc_hospital",
+          "Which one?", "Choose hospital",
+          [["Swellendam Provincial Hospital",""+this.km("swellendam","3 km")+" \u00b7 142 vials \u00b7 +27 28 514 1141","sc_hosp_swellendam_prov"],
+           ["Otto du Plessis Hospital",""+this.km("otto","72 km")+" \u00b7 24 vials \u00b7 +27 28 425 1140","sc_hosp_ottoduplessis"],
+           ["A different hospital","Type the name of the facility","sc_hosp_other"]],
+          true) ] }
+      };
+
+      case "sc_hosp_custom": return {
+        msgs: [{ t:"bot", text:"What is the name of the hospital you are going to?" }],
+        iact: { t:"iact", kind:"await", data:{ awaitText:true, hospital:true, hint:"Type the hospital name\u2026" }},
+        turn: { title:"S-3b Custom hospital text \u00b7 currentStep 10.6", payloads:[ this.text("snakeiq_sc_hosp_custom",
+          "What is the name of the hospital you are going to?", "IS","\u2014") ] }
+      };
+
+      case "sc_hosp_confirm": {
+        const name = this.state.hospital;
+        const body = "14.1 km \u00b7 ~24 min by car\n48 vials in stock\n+27 21 938 5000\n\nIs this the right facility?";
+        return {
+          msgs: [],
+          iact: { t:"iact", kind:"card", data:{ map:true, title:name, body, tag:null },
+            actions:[{ title:"Yes", echo:"Yes", next:"sc_who" }]},
+          turn: { title:"S-3b Custom hospital confirm \u00b7 currentStep 10.7", payloads:[ this.card("snakeiq_sc_hosp_confirm",
+            name, body, [["Yes","sc_hosp_confirm_yes","QUICK_REPLY"]], {}) ] }
+        };
+      }
+
+      case "sc_edge": return {
+        msgs: [{ t:"bot", text:"What has changed?" }],
+        iact: { t:"iact", kind:"list", data:{ map:false, button:"Choose an option", rows:[
+          { title:"False alarm", desc:"Cancel the hospital notification", next:"sc_false_alarm", echo:"False alarm, cancel hospital notification" },
+          { title:"Treating at home", desc:"Giving treatment at home", next:"sc_home_care", echo:"Giving treatment at home" },
+          { title:"Other", desc:"Type what is happening", next:"sc_other", echo:"Other", noChevron:true, typeHere:true }
+        ]}},
+        turn: { title:"S-3 Plans changed \u00b7 currentStep 10.9", payloads:[ this.list("snakeiq_sc_plans_changed",
+          "What has changed?", "Choose an option",
+          [["False alarm","Cancel the hospital notification","sc_false_alarm"],
+           ["Treating at home","Giving treatment at home","sc_home_care"],
+           ["Other","Type what is happening","sc_other"]],
+          false, false,
+          "The full labels (\u201cFalse alarm, cancel hospital notification\u201d) exceed the 25-char quick-reply button limit, so S-3\u2019s options are sent as a list-picker: row titles \u2264 24 chars with the full wording in the description.") ] }
+      };
+
+      case "sc_false_alarm": return {
+        msgs: [{ t:"bot", text:"I\u2019ve cancelled the notification to "+this.state.hospital+".\n\nIf any symptoms appear \u2014 swelling, dizziness, drooping eyelids, trouble breathing \u2014 message me straight away and we will start again." }],
+        iact: null,
+        turn: { title:"S-3 False alarm \u2014 notification cancelled", payloads:[ this.text("snakeiq_sc_false_alarm",
+          "I\u2019ve cancelled the notification to "+this.state.hospital+". If any symptoms appear, message me straight away and we will start again.", "IS","\u2014") ] }
+      };
+
+      case "sc_home_care": return {
+        msgs: [{ t:"bot", chip:["NOT RECOMMENDED","#C94B30","rgba(201,75,48,.12)"], text:"Snake envenomations cannot be treated at home. Antivenom is the only treatment and it can only be given in a hospital.\n\n\u2022 Do not use cutting, sucking, burning, or herbal remedies \u2014 they cause harm and lose time.\n\u2022 Symptoms can turn severe with no warning.\n\nI can keep the hospital on standby if you change your mind." }],
+        iact: { t:"iact", kind:"qr", actions:[
+          { title:"Go to hospital", next:"sc_enroute" },
+          { title:"Stay home for now", next:"sc_home_ack" }
+        ]},
+        turn: { title:"S-3 Home treatment \u2014 harm reduction", payloads:[ this.qr("snakeiq_sc_home_care",
+          "Snake envenomations cannot be treated at home. Antivenom is the only treatment and it can only be given in a hospital. Do not use cutting, sucking, burning, or herbal remedies.",
+          [["Go to hospital","sc_home_go"],["Stay home for now","sc_home_stay"]], "IS","\u2014") ] }
+      };
+
+      case "sc_home_ack": return {
+        msgs: [{ t:"bot", text:"Understood. I\u2019ll keep "+this.state.hospital+" on standby and check in again shortly.\n\nGo immediately if breathing becomes hard, speech slurs, eyelids droop, or swelling spreads." }],
+        iact: null,
+        turn: { title:"S-3 Staying home \u2014 standby + red flags", payloads:[ this.text("snakeiq_sc_home_ack",
+          "I\u2019ll keep the hospital on standby and check in again shortly. Go immediately if breathing becomes hard, speech slurs, eyelids droop, or swelling spreads.", "IS","\u2014") ] }
+      };
+
+      case "sc_other": return {
+        msgs: [{ t:"bot", text:"Tell me what is happening and I\u2019ll help from here." }],
+        iact: { t:"iact", kind:"await", data:{ awaitText:true, other:true, hint:"Type what is happening\u2026" }},
+        turn: { title:"S-3 Other \u2014 free text (edge of prototype)", payloads:[ this.text("snakeiq_sc_other",
+          "Tell me what is happening and I\u2019ll help from here.", "IS","\u2014") ] }
+      };
+
+      case "sc_who": return {
+        msgs: [{ t:"bot", text:"Are you the victim?" }],
+        iact: { t:"iact", kind:"qr", actions:[
+          { title:"Yes, I am the victim", echo:"Yes, I am the victim", isVictim:true, next:"sc_symptoms" },
+          { title:"No, I am with the victim", echo:"No, I am with the victim", isVictim:false, next:"sc_symptoms" }
+        ]},
+        turn: { title:"S-3c Who is answering \u00b7 currentStep 11", payloads:[ this.qr("snakeiq_sc_who",
+          "Are you the victim?", [["Yes, I am the victim","sc_who_victim"],["No, I am with the victim","sc_who_proxy"]], "IS","\u2014",
+          "One tap decides which checklist is sent \u2014 what you feel, or what you see \u2014 and sets the wording of every later question (\u201cyou\u201d vs \u201cthe victim\u201d). Both labels fit the 25-char quick-reply limit.") ] }
+      };
+
+      case "sc_symptoms": {
+        const rec = ID() ? ID().byId(this.state.species || "mamba_black") : null;
+        const cyto = !!rec && (rec.syndromeClass === "cytotoxic" || rec.syndromeClass === "mixed");
+        const pain = cyto ? { label:"Pain spreading up limb", sym:"sym_spread" }
+                          : { label:"Pain at the bite", sym:"sym_local" };
+        const v = this.state.isVictim;
+        const body = v ? "*What do you feel?*\n\nTick all the symptoms that you feel."
+                       : "*What do you see?*\n\nTick all the symptoms that you see on the snake bite victim.";
+        const groups = v ? [
+          { label:null, opts:[
+            { label:"Numbness in face or lips", neuro:true, sym:"sym_ptosis" },
+            { label:"Tingling in hands or feet", neuro:true },
+            { label:"Dizziness", neuro:true, sym:"sym_dizzy" },
+            { label:"Nausea (feel like vomiting)" },
+            pain ],
+            extra:[ { key:"__noneA", label:"None, I feel fine" },
+                    { key:"__other", label:"Something else", sub:"type below" } ] }
+        ] : [
+          { label:null, extra:[ { key:"__noneA", label:"Nothing I can see" },
+                                { key:"__other", label:"Something else", sub:"type below" } ], opts:[
+            { label:"Drooping eyelids", neuro:true, sym:"sym_ptosis" },
+            { label:"Slurred speech", neuro:true, sym:"sym_ptosis" },
+            { label:"Trouble swallowing", neuro:true, sym:"sym_ptosis" },
+            { label:"Trouble breathing", sym:"sym_breath" },
+            { label:"Swelling spreading fast", sym:"sym_spread" } ] }
+        ];
+        const opts = groups[0].opts;
+        const note = "Which checklist is sent follows the answer to \u201cAre you the victim?\u201d \u2014 a conscious victim reports sensations, a bystander reports signs, so a proxy never has to guess at numbness. WhatsApp lists are single-select and cap at 10 rows, so on the real channel each branch ships as one list, or as a deep link into the app. Pain is species-conditional: "
+          + (cyto ? "cytotoxic venom (" + rec.commonName + ") gives severe, spreading local pain."
+                  : "neurotoxic bites are often near-painless, so absence of pain is not reassurance.")
+          + " Which row appears is decided from Seam B\u2019s syndromeClass, never by Design.";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"checklist", data:{ opts, groups, button:"Submit", none:null,
+            otherHint: v ? "Type what you are feeling\u2026" : "Type what you can see\u2026", next:"sc_after_symptoms" }, reset:true },
+          turn: { title:"S-4/S-5 Symptom checklist \u00b7 currentStep 11.5", payloads:[
+            this.list(v ? "snakeiq_sc_symptoms_self" : "snakeiq_sc_symptoms_proxy",
+              body.split("*").join(""), "Submit",
+              groups[0].opts.map((o,k)=>[o.label, "", "sym_"+k])
+                .concat((groups[0].extra||[]).map(e=>[e.label, "", "sym"+e.key])), false, true, note)
+          ]}
+        };
+      }
+
+      // A neurological answer is acted on the moment it is given — the airway instruction
+      // is the consequence of that answer, and holding it back for two more questions
+      // reads as though the bot did not register what it was just told.
+      case "sc_after_symptoms":
+        return this.buildState(this.state.hasNeuro ? "sc_neuro" : "sc_meds");
+
+      // S-6 medications
+      case "sc_meds": {
+        const v = this.state.isVictim;
+        const body = v ? "*Medicine check*\n\nHave you taken any medicine or herbal remedies since the bite?"
+                       : "*Medicine check*\n\nHas the victim taken any medicine or herbal remedies since the bite?";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"qr", actions:[
+            { title:"Yes", next:"sc_meds_which" },
+            { title:"No", next:"sc_after_meds" }
+          ]},
+          turn: { title:"S-6 Medications \u00b7 currentStep 11.7", payloads:[ this.qr("snakeiq_sc_meds",
+            body, [["Yes","sc_meds_yes"],["No","sc_meds_no"]], "IS","\u2014") ] }
+        };
+      }
+
+      case "sc_meds_which": return {
+        msgs: [{ t:"bot", text:"What medicines or herbal remedies have you taken? Just type your response." }],
+        iact: { t:"iact", kind:"await", data:{ awaitText:true, hint:"Type the medication name\u2026" }},
+        turn: { title:"S-6 Medication input \u00b7 currentStep 11.72", payloads:[ this.text("snakeiq_sc_meds_which",
+          "What medicines or herbal remedies have you taken? Just type your response.", "IS","\u2014") ] }
+      };
+
+      case "sc_meds_warn": return {
+        msgs: [{ t:"bot", text:"I\u2019ve made a note of that\n\nDo not take any more medicines or remedies until you are seen by a doctor" }],
+        iact: { t:"iact", kind:"qr", actions:[{ title:"Okay", next:"sc_after_meds" }]},
+        turn: { title:"S-6 Medication warning", payloads:[ this.text("snakeiq_sc_meds_warn",
+          "I\u2019ve made a note of that\n\nDo not take any more medicines or remedies until you are seen by a doctor", "IS","\u2014") ] }
+      };
+
+      case "sc_after_meds":
+        // Already told us the swelling is spreading fast — asking whether it increased
+        // makes the bot look like it was not listening, and the answer is already yes.
+        // Go straight to the photo, carrying that answer forward.
+        if (this.spreadReported()) return this.buildState("sc_swelling_known");
+        return this.buildState("sc_swelling");
+
+      case "sc_swelling_known":
+        return this.buildState("sc_post_swelling");
+
+      case "sc_post_swelling":
+        return this.buildState("sc_mark");
+
+      case "sc_after_neuro":
+        return this.buildState("sc_meds");
+
+      // S-7 conditional neurological warning — fires straight off the symptom checklist
+      case "sc_neuro": {
+        const bound = sp.sid && /tourniquet|bandage/.test(String((ID() ? (ID().byId(sp.sid)||{}).firstAid : "") || ""));
+        const limb = bound
+          ? "\u2022 Do NOT loosen or remove the tourniquet or pressure bandage \u2014 early removal before antivenom risks a sudden bolus of venom.\n\u2022 Re-confirm the time it went on so ER knows how long it has been there (~4h practical limit).\n"
+          : "\u2022 Do NOT bind or bandage the limb \u2014 for a "+sp.name+" bite it stays elevated and still.\n";
+        const v = this.state.isVictim;
+        const text = (v
+          ? "Lie on your left side \u2014 not flat on your back \u2014 to protect your airway if the paralysis spreads, and so you do not choke if you vomit.\n\n\u2022 Nothing to eat or drink from now on; if you were sipping water, stop.\n\u2022 Tell whoever is with you that your breathing may get weak.\n"
+          : "Move the victim onto their left side \u2014 not flat on their back \u2014 to protect the airway if paralysis progresses and to prevent aspiration if they vomit.\n\n\u2022 Nothing by mouth from this point on; if they were sipping water, stop.\n\u2022 Be ready to support breathing; keep dentures and food out of the mouth.\n")
+          +limb+"\nI\u2019m re-sending your pre-alert to "+this.state.hospital+" flagged as neurotoxic progression, so they ready antivenom and an intubation kit.";
+        return {
+          msgs: [{ t:"bot", chip:["NEUROLOGICAL PROGRESSION DETECTED","#C94B30","rgba(201,75,48,.12)"], text }],
+          iact: { t:"iact", kind:"qr", actions:[{ title:"Ok", next:"sc_after_neuro" }]},
+          turn: { title:"S-7 Neurological warning (conditional, immediately on detection)", payloads:[ this.text("snakeiq_sc_neuro_warning", text, "IS","\u2014") ] }
+        };
+      }
+
+      // S-8 swelling check
+      case "sc_swelling": {
+        const v = this.state.isVictim;
+        const body = v ? "Has swelling increased?" : "Has the victim\u2019s swelling increased?";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"qr", actions:[
+            { title:"Yes", swell:true, next:"sc_post_swelling" },
+            { title:"No", swell:false, next:"sc_post_swelling" }
+          ]},
+          turn: { title:"S-8 Swelling check \u00b7 currentStep 12", payloads:[ this.qr("snakeiq_sc_swelling",
+            body, [["Yes","sc_swell_yes"],["No","sc_swell_no"]], "IS","\u2014") ] }
+        };
+      }
+
+      // S-9 marking + photo
+      case "sc_mark": {
+        const v = this.state.isVictim;
+        const markBody = v ? "If you have a pen, draw a line around your bite where the swelling stops.\n\nWrite the time on the line."
+                           : "If you have a pen, draw a line around the bite on the victim where the swelling stops.\n\nWrite the time on the line.";
+        const mark = "*Swelling check*\n\n" + markBody;
+        const rec3 = ID() ? ID().byId(this.state.species || "mamba_black") : null;
+        const cls = rec3 ? rec3.syndromeClass : null;
+        const siteNote = cls === "neurotoxic" || cls === "mixed"
+          ? sp.name+" bites often only leave a small scratch or bite mark, or no mark that can be seen.\n\nThe "+sp.name+" bite is still very dangerous"
+          : cls === "cytotoxic"
+            ? "Include the edge of the swelling in the frame. Bruising and blistering build over hours, and the team will compare against this photo."
+            : "A clear photo of the bite site helps the team at handover.";
+        const photo = "Take a photo of the bite.\n\n"+siteNote;
+        // Spreading swelling reported on the checklist counts as a yes here, whether or not
+        // the swelling question was asked.
+        const swelling = this.state.swell || this.spreadReported();
+        const msgs = swelling ? [{ t:"bot", head:"*Swelling check*", img:SWELL_IMG, text:markBody }, { t:"bot", text:photo }]
+                              : [{ t:"bot", text:photo }];
+        const payloads = [ this.qr("snakeiq_sc_bite_photo", photo,
+          [["Take a photo","sc_photo_new"],["Use existing photo","sc_photo_lib"],["No photo","sc_photo_skip"]], "IS","\u2014") ];
+        if (swelling) payloads.unshift(this.text("snakeiq_sc_swelling_mark", mark, "IS","\u2014"));
+        return {
+          msgs,
+          iact: { t:"iact", kind:"qr", actions:[
+            { title:"Take a photo", echo:"[Photo]", next:"__limbphoto" },
+            { title:"Use existing photo", echo:"[Photo]", next:"__limbphoto" },
+            { title:"No photo", next:"sc_sent" }
+          ]},
+          turn: { title:"S-9 Limb photo"+(this.state.swell ? " + swelling marking" : "")+" \u00b7 currentStep 13.5", payloads }
+        };
+      }
+
+      case "sc_sent_photo": return {
+        msgs: [{ t:"bot", text:"Good job! We are sending your update ahead to "+this.state.hospital+"." }],
+        iact: this.buildState("sc_terminal").iact,
+        turn: { title:"S-9 Photo sent \u2192 terminal", payloads:[
+          this.text("snakeiq_sc_update_sent_photo", "Good job! We are sending your update ahead to "+this.state.hospital+".", "IS","\u2014"),
+          this.buildState("sc_terminal").turn.payloads[0]
+        ]}
+      };
+
+      case "sc_sent": return {
+        msgs: [{ t:"bot", text:"We are sending your update ahead to "+this.state.hospital+"." }],
+        iact: this.buildState("sc_terminal").iact,
+        turn: { title:"S-9 Update sent \u2192 terminal", payloads:[
+          this.text("snakeiq_sc_update_sent", "We are sending your update ahead to "+this.state.hospital+".", "IS","\u2014"),
+          this.buildState("sc_terminal").turn.payloads[0]
+        ]}
+      };
+
+      // T-1 terminal card
+      case "sc_terminal": {
+        const sp = SP(this.state.species || "mamba_black");
+        const rows = [
+          { title:"My bite information", desc:"Snake, time, location, hospital, vials", next:"sc_bite_info", echo:"My bite information" },
+          { title:"Treatment for "+sp.name, desc:"WHO protocol in plain language", next:"sc_treatment", echo:"Treatment for "+sp.name },
+          this.state.checkedIn
+            ? { title:"Change my status", desc:"Current status: checked into "+this.state.hospital, next:"sc_status", echo:"Change my status" }
+            : { title:"I have checked into the ER", desc:"Hand over to the medical team", checkedIn:true, next:"sc_checked_in", echo:"I have checked into the ER" },
+          { title:"Find a different hospital", desc:"See other facilities near you", next:"sc_hosp_list", echo:"Find a different hospital" }
+        ];
+        return {
+          msgs: [],
+          iact: { t:"iact", kind:"list", data:{ map:false, button:"Menu", menuTop:true, endTest:true, rows }},
+          turn: { title:"T-1 Terminal card \u00b7 currentStep 14", payloads:[ this.list("snakeiq_sc_terminal",
+            "Nothing else is needed from you. The menu stays open if you need it.", "Menu",
+            rows.map(r=>[r.title, r.desc, "sc_"+r.next]), false, false,
+            "Four persistent actions do not fit a quick-reply (\u2264 3 buttons), so T-1 is sent as a list-picker, which carries up to 10 rows. The button reads \u201cMenu\u201d and sits above the rows so the turn closes the flow rather than asking for another decision \u2014 nothing here is required of the victim.") ] }
+        };
+      }
+
+      case "sc_treatment": {
+        const sp = SP(this.state.species || "mamba_black");
+        return {
+          msgs: [{ t:"bot", text:"Treatment guidance for a "+sp.name+" bite is prepared for the hospital team \u2014 the full WHO protocol in plain language is the next piece to build." }],
+          iact: this.buildState("sc_terminal").iact,
+          turn: { title:"T-1 Treatment \u2014 edge of prototype", payloads:[ this.text("snakeiq_sc_treatment",
+            "Treatment guidance for a "+sp.name+" bite is prepared for the hospital team.", "IS","\u2014") ] }
+        };
+      }
+
+      // Row content is the incident-record field list, filtered to the fields marked for
+      // WhatsApp: name, species, snake photo, time of bite, location, bite photo, and the
+      // first-aid update answers. Rows only appear when the session actually holds the
+      // value \u2014 no photo means no row and no empty media block, not a blank square.
+      // Age, gender, height, weight, allergies and bite site are native-app fields and are
+      // deliberately absent here.
+      case "sc_bite_info": {
+        const S = this.state, sp = SP(S.species || "mamba_black");
+        const sym = S.selectedSymptoms || [];
+        const pct = this.matchPct();
+        const rows = [["Name", PROFILE_NAME]];
+        rows.push(["Reported species", S.species
+          ? sp.name+" ("+sp.sci+") \u00b7 "+(pct != null ? pct+"% match" : "confirmed by description")
+          : "Not identified"]);
+        if (S.species) rows.push(["Snake photo", S.idMethod === "photo" ? "Sent by reporter" : "SnakeIQ reference image",
+          S.snakeUrl || SP_IMG(S.species)]);
+        rows.push(["Time reported", Component.fmt24(CHAT_START_MIN)]);
+        rows.push(["Estimated time of bite", S.biteTime
+          ? S.biteTime.label+" \u00b7 "+Component.dur(S.biteTime.minutesBeforeChat)+" before chat started"
+          : "Not recorded"]);
+        rows.push(["Location", !S.hasLoc ? "Not shared"
+          : S.coords ? S.coords.lat.toFixed(4)+", "+S.coords.lng.toFixed(4)+" \u00b7 \u00b1"+S.coords.acc+" m"
+          : "Swellendam, Western Cape \u00b7 \u201334.0221, 20.4406"]);
+        rows.push(["Symptoms", (sym.length ? sym.join(", ") : "None reported")
+          + (S.symTime ? " \u00b7 recorded "+S.symTime : "")]);
+        rows.push(["Swelling", S.swell ? "Increased since last check" : "No increase reported"]);
+        if (S.bitePhoto) rows.push(["Limb photo", S.swell ? "Attached \u00b7 swelling line marked" : "Attached", S.limbUrl || null]);
+        rows.push(["Medications taken", S.meds || "None reported"]);
+        rows.push(["Sent to", S.hospital+" \u00b7 "+this.km(S.hospital==="Otto du Plessis Hospital"?"otto":"swellendam","3 km")+" \u00b7 142 vials"]);
+        const body = rows.map(r=>"*"+r[0]+":* "+r[1]).join("\n");
+        return {
+          msgs: [],
+          iact: { t:"iact", kind:"card", data:{ title:"Bite information", rows, tag:null },
+            actions:[
+              { title:"Send as text", echo:"Sent as text", next:"sc_terminal" },
+              { title:"Send via email", echo:"Sent via email", next:"sc_terminal" },
+              { title:"Save to device", echo:"Saved to device", next:"sc_terminal" }
+            ]},
+          turn: { title:"T-1 Bite info summary", payloads:[ this.card("snakeiq_sc_bite_info", "Bite information", body,
+            [["Send as text","sc_share_text","QUICK_REPLY"],["Send via email","sc_share_email","QUICK_REPLY"],["Save to device","sc_share_save","QUICK_REPLY"]], {},
+            "WhatsApp has no table or key-value component, so the record is one text body of *label:* value lines \u2014 which is what a clinician reads in the handover message. The two photos sit inline under their own rows, in the order a clinician reads the case: who, what bit them, when it was reported, when it happened, where, what is happening now. There is no header image: a card with no photo sends as a plain text message with buttons, not as a media card with an empty frame. Every row is a field the incident record marks as WhatsApp-collected; a field the session never captured is omitted rather than shown empty.") ] }
+        };
+      }
+
+      // Checking in does not end the conversation \u2014 it changes one fact about it. The
+      // terminal card comes back with the status row inverted, so the victim can correct a
+      // premature or wrong check-in instead of being left with a dead thread.
+      case "sc_checked_in": {
+        const t = this.buildState("sc_terminal");
+        return { msgs:[{ t:"bot", text:"Checked in at "+this.state.hospital+". The medical team will take care of you now." }],
+          iact: t.iact,
+          turn: { title:"T-1 Checked into ER \u00b7 status row swapped", payloads:[
+            this.text("snakeiq_sc_checked_in", "Checked in at "+this.state.hospital+". The medical team will take care of you now.", "IS","\u2014"),
+            t.turn.payloads[0]
+          ]}
+        };
+      }
+
+      case "sc_status": {
+        const body = "You are checked into "+this.state.hospital+". What has changed?";
+        return {
+          msgs: [{ t:"bot", text:body }],
+          iact: { t:"iact", kind:"qr", actions:[
+            { title:"Moved hospital", next:"sc_hosp_list" },
+            { title:"Discharged", next:"sc_discharged" },
+            { title:"Nothing, go back", next:"sc_terminal" }
+          ]},
+          turn: { title:"T-1 Change status", payloads:[ this.qr("snakeiq_sc_status", body,
+            [["Moved hospital","sc_st_moved"],["Discharged","sc_st_discharged"],["Nothing, go back","sc_st_back"]], "IS","\u2014",
+            "Reached from the status row on the terminal card. Three options fit a quick-reply exactly; a fourth would force this back to a list-picker.") ] }
+        };
+      }
+
+      case "sc_discharged": return {
+        msgs: [{ t:"bot", text:"Noted \u2014 discharged from "+this.state.hospital+". Follow-up care is the next piece to build." }],
+        iact: null,
+        turn: { title:"T-1 Discharged \u2014 edge of prototype", payloads:[ this.text("snakeiq_sc_discharged",
+          "Noted \u2014 discharged from "+this.state.hospital+".", "IS","\u2014") ] }
+      };
+
+      default: return { msgs:[{t:"bot",text:"(end of prototyped path)"}], iact:null, turn:this.state.turn };
+    }
+  }
+
+  // ---------- payload factory ----------
+  qr(fn, body, actions, session, approval, note){
+    return { friendly_name:fn, content_type:"twilio/quick-reply", session, approval, note,
+      limit:"\u2264 3 buttons \u00b7 title \u2264 25 chars (WhatsApp)",
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/quick-reply":{ body,
+        actions: actions.map(a=>({ id:a[1], title:a[0] })) } } },
+      checks: this.mkChecks(actions.map(a=>({ label:'action "'+a[0]+'"', len:a[0].length, limit:25 }))) };
+  }
+  checklist(fn, body, opts, note){
+    return { friendly_name:fn, content_type:"twilio/list-picker (multi-select emulated)", session:"IS", approval:"\u2014",
+      limit:"WhatsApp has NO multi-select \u00b7 emulated as repeated list-picker or free text",
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/list-picker":{ body, button:"Continue",
+        items: opts.map((o,k)=>({ item:o.label, id:"sym_"+k, description:o.neuro?"neurological indicator":"" })) } } },
+      note: note,
+      checks: this.mkChecks(opts.map(o=>({ label:'item "'+o.label+'"', len:o.label.length, limit:24 }))) };
+  }
+  qrTmpl(fn, body, actions, variables){
+    return { friendly_name:fn, content_type:"twilio/quick-reply (template)", session:"OOS", approval:"REQ",
+      limit:"\u2264 3 buttons \u00b7 title \u2264 25 \u00b7 pre-approved template required",
+      json:{ friendly_name:fn, language:"en", variables, types:{ "twilio/quick-reply":{ body,
+        actions: actions.map(a=>({ id:a[1], title:a[0] })) } } },
+      checks: this.mkChecks(actions.map(a=>({ label:'action "'+a[0]+'"', len:a[0].length, limit:25 }))) };
+  }
+  timeq(fn, body){
+    return { friendly_name:fn, content_type:"twilio/text \u00b7 time reply", session:"IS", approval:"\u2014",
+      limit:"WhatsApp has NO time picker \u00b7 reply is free text, parsed server-side",
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/text":{ body } } },
+      note:"WhatsApp has no time-picker component, so this is a plain text turn and the victim types a clock time \u2014 minute-accurate, and no element here that WhatsApp cannot render. Anchoring on the session start time (\u201cyou started this chat at " + Component.fmt24(CHAT_START_MIN) + "\u201d) is what makes free text workable: people recall \u201chalf past two\u201d far better than \u201c25 minutes ago\u201d. Design still sends only a bucket id on Seam A \u2014 the module owns bucket\u2192range.",
+      checks:[{ label:"body", len:body.length, limit:4096, ok:true }] };
+  }
+  loc(fn, body){
+    return { friendly_name:fn, content_type:"twilio/location \u00b7 send-location request", session:"IS", approval:"\u2014",
+      limit:"in-session only \u2014 cannot start a conversation",
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/quick-reply":{ body,
+        actions:[{ id:"send_location", title:"Send location" }] } } },
+      note:"Renders as a WhatsApp send-location request. Location + list-picker are reply-only \u2014 the bot can never prompt this un-prompted. \u201CPick a different spot\u201D opens WhatsApp\u2019s own location picker \u2014 the client\u2019s map, pin and nearby-place list, which Design cannot style or embed in a message. Either route returns one inbound location message (lat/lng + optional place label).",
+      checks:[] };
+  }
+  media(fn, body, actions){
+    return { friendly_name:fn, content_type:"twilio/media", session:"IS", approval:"\u2014",
+      limit:"camera vs library is a client concern \u00b7 title \u2264 25",
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/quick-reply":{ body,
+        actions: actions.map(a=>({ id:a[1], title:a[0] })) } } },
+      checks: this.mkChecks(actions.map(a=>({ label:'action "'+a[0]+'"', len:a[0].length, limit:25 }))) };
+  }
+  text(fn, body, session, approval, note){
+    return { friendly_name:fn, content_type:"twilio/text", session, approval, note,
+      limit:"body \u2264 4,096 chars",
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/text":{ body } } },
+      checks:[{ label:"body", len:body.length, limit:4096, ok:true }] };
+  }
+  card(fn, title, body, btns, variables, note){
+    return { friendly_name:fn, content_type:"twilio/card", session:"IS", approval:"\u2014", note,
+      limit:"single card \u2264 3 buttons \u00b7 body variables OK \u00b7 title \u2264 25",
+      json:{ friendly_name:fn, language:"en", variables, types:{ "twilio/card":{ title, body,
+        media:["https://cdn.snakeiq.org/species/"+fn.split("_").pop()+".jpg"],
+        actions: btns.map(b=>({ type:b[2], id:b[1], title:b[0] })) } } },
+      checks: this.mkChecks(btns.map(b=>({ label:'button "'+b[0]+'"', len:b[0].length, limit:25 }))) };
+  }
+  cardUrl(fn, title, body, btns){
+    return { friendly_name:fn, content_type:"twilio/card \u00b7 URL button", session:"IS", approval:"\u2014",
+      limit:"button \u2264 25 \u00b7 all buttons must share one action type",
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/card":{ title, body,
+        media:["https://cdn.snakeiq.org/maps/swellendam.png"],
+        actions: btns.map(b=>({ type:b[2], title:b[0], url:b[1] })) } } },
+      checks: this.mkChecks(btns.map(b=>({ label:'button "'+b[0]+'"', len:b[0].length, limit:25 }))) };
+  }
+  carousel(cards, body){
+    body = body || "Closest matches from the local key. Tap Select on the snake you saw.";
+    const anyPct = cards.some(c=>c.match!=null);
+    return { friendly_name:"snakeiq_species_carousel", content_type:"twilio/carousel", session:"IS", approval:"REQ",
+      limit:"card title/body NOT variable on WhatsApp \u00b7 image via URL-suffix \u00b7 1\u20132 buttons \u00b7 approval required",
+      json:{ friendly_name:"snakeiq_species_carousel", language:"en",
+        variables: cards.reduce((v,c,k)=>{ v[String(k+1)] = c.sid; return v; }, {}),
+        types:{ "twilio/carousel":{
+        body,
+        cards: cards.map((c,k)=>({ title:c.title, body:(c.match!=null? c.match+"% match"+(c.low?" (low confidence)":"")+" \u00b7 ":"")+c.sub+" \u00b7 "+c.tag,
+          media:"https://cdn.snakeiq.org/species/{{"+(k+1)+"}}.jpg",
+          actions:[{ type:"QUICK_REPLY", id:"pick_"+c.sid, title:c.action.title }] })) } } },
+      note: anyPct ? "Card text is static on WhatsApp \u2014 so the ranked candidate set (and each confidence %) is pre-built server-side once the module returns, and baked into the card bodies. The user chooses with the module\u2019s confidence in view; on the description path the number is the key\u2019s posterior, not a vision score." : "Static card text is a WhatsApp constraint \u2014 pre-build the candidate set.",
+      checks: this.mkChecks(cards.map(c=>({ label:c.title+' button "'+c.action.title+'"', len:c.action.title.length, limit:25 }))) };
+  }
+  list(fn, body, button, rows, hasMap, dynamic, note){
+    const ch = [{ label:'list button "'+button+'"', len:button.length, limit:20 }];
+    rows.forEach(r=>{ ch.push({ label:'row title "'+r[0]+'"', len:r[0].length, limit:24 });
+                      ch.push({ label:'row desc ("'+(r[0])+'")', len:r[1].length, limit:72 }); });
+    return { friendly_name:fn, content_type:"twilio/list-picker"+(hasMap?" \u00b7 media header":""), session:"IS", approval:"\u2014",
+      limit:"\u2264 10 rows \u00b7 row title \u2264 24 \u00b7 desc \u2264 72 \u00b7 button \u2264 20 \u00b7 in-session only"+(dynamic?" \u00b7 fully dynamic, no approval":""),
+      json:{ friendly_name:fn, language:"en", types:{ "twilio/list-picker":{ body, button,
+        items: rows.map(r=>({ id:r[2], item:r[0], description:r[1] })) } } },
+      note: note || (hasMap ? "\u201CList Card with Header Image Map\u201D \u2014 media header rides above the list; rows are variable in-session." : undefined),
+      checks: this.mkChecks(ch) };
+  }
+
+  // ---------- rendering ----------
+  renderVals(){
+    const thread = this.state.thread.map((m,i)=>this.renderMsg(m,i));
+    // The participant's task is over at the terminal card; the researcher closes the
+    // session from the same screen rather than reaching for the hidden strip.
+    const last = this.state.thread[this.state.thread.length - 1];
+    if (last && last.t === "iact" && last.data && last.data.endTest && this.state.sessionId){
+      const h = React.createElement;
+      thread.push(this.state.sessionEnded
+        ? h("div",{ key:"endtest", style:{ margin:"38px 0 10px", textAlign:"center", fontFamily:"'Roboto Mono',monospace", fontSize:11, letterSpacing:".06em", color:"#6b7a82" } },
+            "SESSION ENDED \u00b7 EXPORT BOTH FILES FROM THE BAR BELOW")
+        : h("div",{ key:"endtest", style:{ margin:"38px 0 10px", display:"flex", justifyContent:"center" } },
+            h("button",{ onClick:()=>this.endSession(),
+              style:{ minHeight:52, padding:"0 30px", border:"none", borderRadius:8, background:"#C94B30", color:"#fff",
+                font:"600 16px/1.2 Barlow,sans-serif", letterSpacing:".03em", cursor:"pointer", boxShadow:"0 2px 8px rgba(0,0,0,.18)" } },
+              "END TEST")));
+    }
+    return {
+      thread,
+      inspectorBody: this.renderInspector(),
+      inputValue: this.state.inputValue,
+      inputHint: this.t(this.inputHint()),
+      // Language is a setting, not a turn: chosen before the session starts, so the
+      // participant meets the bot already speaking their language.
+      onLangEn: ()=>this.setState({ lang:"en" }),
+      onLangAf: ()=>this.setState({ lang:"af" }),
+      langEnBg: this.state.lang === "en" ? "#C94B30" : "transparent",
+      langEnFg: this.state.lang === "en" ? "#ffffff" : "rgba(238,233,224,.72)",
+      langEnBd: this.state.lang === "en" ? "#C94B30" : "rgba(238,233,224,.34)",
+      langAfBg: this.state.lang === "af" ? "#C94B30" : "transparent",
+      langAfFg: this.state.lang === "af" ? "#ffffff" : "rgba(238,233,224,.72)",
+      langAfBd: this.state.lang === "af" ? "#C94B30" : "rgba(238,233,224,.34)",
+      showHint: !(this.state.inputValue || "").length,
+      onInput: (e)=>this.setState({ inputValue: e.target.value }),
+      onKey: (e)=>{ if (e.key === "Enter") this.sendTyped(); },
+      onSend: ()=>this.sendTyped(),
+      onPlus: ()=>this.attachPhoto(),
+      pid: this.state.pid,
+      sessionPending: !this.state.sessionId,
+      sessionStarted: !!this.state.sessionId,
+      sessionActionLabel: this.state.sessionEnded ? "NEW" : "END",
+      logDot: this.state.sessionEnded ? "rgba(238,233,224,.34)" : "#C94B30",
+      sessionFootnote: this.state.sessionId
+        ? "Session " + this.state.sessionId
+        : "Stays on this phone. Export before closing the tab — CSV plus an Audacity label track.",
+      logStatus: this.state.pid + " \u00b7 PART " + (this.state.phase || 1) + " \u00b7 "
+        + this.state.logCount + " events \u00b7 "
+        + (this.state.sessionEnded ? "ended \u2014 export both files" : this.elapsedLabel()),
+      onPid: (e)=>this.setState({ pid: e.target.value }),
+      onPidKey: (e)=>{ if (e.key === "Enter") this.startSession(); },
+      onStartSession: ()=>this.startSession(),
+      onResume: ()=>this.resumeSession(),
+      canResume: !!this.state.resumable,
+      resumeLabel: this.state.resumable
+        ? "Resume " + this.state.resumable.pid + " \u00b7 " + this.state.resumable.rows.length + " events \u00b7 no new beep"
+        : "",
+      onTestTone: ()=>this.tone("start", ()=>{}),
+      onExportLog: ()=>this.exportLog(),
+      onExportLabels: ()=>this.exportLabels(),
+      onBeginPart2: ()=>this.beginPart2(),
+      onStripHold: ()=>this.holdStrip(),
+      onStripRelease: ()=>this.releaseStrip(),
+      onStripClose: ()=>this.closeStrip(),
+      interstitial: !!this.state.interstitial,
+      interviewClock: this.elapsedLabel(),
+      stripOpen: !!this.state.stripOpen || !!this.state.sessionEnded,
+      stripClosed: !(this.state.stripOpen || this.state.sessionEnded),
+      onSessionAction: ()=>{ if (this.state.sessionEnded) this.newSession(); else this.endSession(); },
+      camRef: this.camRef,
+      libRef: this.libRef,
+      onFilePicked: (e)=>this.filePicked(e),
+      locSheetOpen: !!this.state.locSheet,
+      closeLocSheet: ()=>this.closeLocSheet(),
+      onSendPin: ()=>this.sendLoc("Dropped pin \u00b7 Swellendam, Western Cape"),
+      onSendPlace1: ()=>this.sendLoc("Drostdy Museum, Swellendam"),
+      onSendPlace2: ()=>this.sendLoc("Swellendam Taxi Rank"),
+      onSendPlace3: ()=>this.sendLoc("N2 towards Riversdale"),
+      resetFlow: ()=>{ this.setState({ thread:[], turn:null, intent:null, species:null, idMethod:null, severity:null, inputValue:"",
+        isVictim:true, hospital:"Swellendam Provincial Hospital", hasNeuro:false, selectedSymptoms:[], checkSel:{}, hasLoc:false,
+        seamA:false, seamB:false, keyStep:0, keyAnswers:[], biteTime:null, symId:null, symTime:null, swell:false, locSheet:null, meds:null, bitePhoto:false, checkedIn:false,
+        photoUrl:null, snakeUrl:null, limbUrl:null, coords:this.state.coords }, ()=>{ this.eng = null; this.typeRowShown = false; this.photoBusy = false; this.fa1Shown = false; this.enter("welcome", true); }); }
+    };
+  }
+
+  bubbleMeta(user){
+    const h = React.createElement;
+    return h("span", { style:{ float:"right", marginLeft:8, marginTop:4, display:"inline-flex", alignItems:"center", gap:3, fontSize:11, color:Component.C.meta } },
+      this.clock(),
+      user ? h("svg",{ width:15, height:11, viewBox:"0 0 18 12", fill:"none" },
+        h("path",{ d:"M1 6.5l3 3 7-8", stroke:Component.C.tick, strokeWidth:1.6, strokeLinecap:"round", strokeLinejoin:"round" }),
+        h("path",{ d:"M6 9.5l6.5-8", stroke:Component.C.tick, strokeWidth:1.6, strokeLinecap:"round", strokeLinejoin:"round" })) : null);
+  }
+
+  textLines(text){
+    const h = React.createElement;
+    // WhatsApp *bold* markup, so the transcript matches what the channel renders
+    const rich = (ln)=> ln.split(/\*([^*]+)\*/).map((part,k)=> k % 2
+      ? h("b",{ key:k, style:{ fontWeight:700 } }, part) : part);
+    return String(text).split("\n").map((ln,i)=>{
+      const bullet = ln.trim().startsWith("\u2022");
+      return h("div",{ key:i, style:{ minHeight: ln==="" ? 8 : "auto", paddingLeft: bullet?12:0, textIndent: bullet?-12:0 } }, rich(ln));
+    });
+  }
+
+  renderMsg(m, i){
+    const h = React.createElement, C = Component.C;
+    const anim = { animation:"msgIn .28s ease both" };
+
+    if (m.t === "sys") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"6px 0 10px" } },
+      h("div",{ style:{ background:"#fdf4c9", color:"#54656f", fontSize:11.5, lineHeight:"16px", textAlign:"center", padding:"7px 12px", borderRadius:8, maxWidth:"85%", boxShadow:"0 1px .5px rgba(0,0,0,.1)" } }, this.t(m.text)));
+
+    if (m.t === "day") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"4px 0 10px" } },
+      h("div",{ style:{ background:"#e2f0d6", color:"#54656f", fontSize:11.5, fontWeight:600, padding:"5px 12px", borderRadius:8, letterSpacing:".04em" } }, "TODAY"));
+
+    if (m.t === "pnote") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"12px 0 10px" } },
+      h("div",{ style:{ maxWidth:"94%", background:"rgba(68,118,135,.09)", border:"1px dashed rgba(68,118,135,.5)", borderRadius:8, padding:"8px 11px", fontFamily:"'Roboto Mono',monospace", fontSize:11, lineHeight:"16px", color:"#3d4d57" } },
+        h("div",{ style:{ fontWeight:700, letterSpacing:".07em", color:C.teal, marginBottom:4 } }, "PROTOTYPE NOTE"),
+        m.text));
+
+    if (m.t === "user" || m.t === "bot" || m.t === "note"){
+      const user = m.t === "user";
+      const bg = user ? C.outBg : C.inBg;
+      return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent: user?"flex-end":"flex-start", marginBottom:8 } },
+        h("div",{ style:{ maxWidth:"80%", background:bg, color:C.txt, fontSize:14.3, lineHeight:"19px", padding:"6px 9px 8px", borderRadius:8, [user?"borderTopRightRadius":"borderTopLeftRadius"]:2, boxShadow:"0 1px .5px rgba(0,0,0,.13)", fontStyle: m.t==="note"?"italic":"normal", color: m.t==="note"?"#54656f":C.txt } },
+          m.chip ? h("div",{ style:{ display:"inline-flex", alignItems:"center", gap:5, background:m.chip[2], color:m.chip[1], fontSize:10.5, fontWeight:700, letterSpacing:".05em", padding:"3px 8px", borderRadius:4, marginBottom:6 } }, this.t(m.chip[0])) : null,
+          m.head ? h("div",{ style:{ whiteSpace:"pre-wrap", marginBottom:6 } }, this.textLines(this.t(m.head))) : null,
+          m.img ? h("img",{ src:m.img, style:{ width:"100%", display:"block", borderRadius:6, marginBottom:7 } }) : null,
+          h("div",{ style:{ whiteSpace:"pre-wrap" } }, this.textLines(this.t(m.text))),
+          this.bubbleMeta(user)));
+    }
+
+    if (m.t === "userphoto") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"flex-end", marginBottom:8 } },
+      h("div",{ style:{ maxWidth:"66%", background:C.outBg, padding:3, borderRadius:8, borderTopRightRadius:2, boxShadow:"0 1px .5px rgba(0,0,0,.13)", position:"relative" } },
+        (m.src || (m.kind === "limb" ? null : SNAKE_PHOTO))
+          ? h("img",{ src: m.src || SNAKE_PHOTO, style:{ width:"100%", display:"block", borderRadius:6, aspectRatio:"4/3", objectFit:"cover" } })
+          : h("div",{ style:{ width:"220px", maxWidth:"100%", aspectRatio:"4/3", borderRadius:6, background:"#C9C4BC", display:"flex", alignItems:"center", justifyContent:"center", color:"#11344F", fontSize:11, fontWeight:600, letterSpacing:".06em" } }, "PHOTO OF BITTEN LIMB"),
+        h("span",{ style:{ position:"absolute", right:9, bottom:7, fontSize:11, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.6)", display:"inline-flex", gap:3, alignItems:"center" } }, this.clock())));
+
+    if (m.t === "userloc") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"flex-end", marginBottom:8 } },
+      h("div",{ style:{ width:"66%", background:C.outBg, padding:3, borderRadius:8, borderTopRightRadius:2, boxShadow:"0 1px .5px rgba(0,0,0,.13)", overflow:"hidden" } },
+        h("div",{ style:{ borderRadius:6, overflow:"hidden" } }, this.mapThumb(94)),
+        h("div",{ style:{ display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:8, padding:"5px 6px 3px" } },
+          h("span",{ style:{ fontSize:13, color:C.txt, lineHeight:"17px" } }, m.label),
+          h("span",{ style:{ fontSize:11, color:C.meta, whiteSpace:"nowrap" } }, this.clock()))));
+
+    if (m.t === "iact") return this.renderIact(m, i);
+    return null;
+  }
+
+  waBtn(label, onClick, icon){
+    const h = React.createElement, C = Component.C;
+    return h("button",{ className:"wa-btn", onClick, style:{ width:"100%", border:"none", background:C.inBg, color:C.green, fontFamily:"Inter,sans-serif", fontSize:14.5, fontWeight:500, padding:"11px 8px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:7 } },
+      icon || null, label);
+  }
+  replyIcon(){ return React.createElement("svg",{ width:16, height:16, viewBox:"0 0 24 24", fill:"#008069" }, React.createElement("path",{ d:"M10 9V5l-7 7 7 7v-4c5 0 8 1.5 10 5-.5-5-3-10-10-11z" })); }
+  pinSvg(size,color){ return React.createElement("svg",{ width:size, height:size, viewBox:"0 0 24 24", fill:color }, React.createElement("path",{ d:"M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z" })); }
+
+  mapThumb(h,w){
+    const H = React.createElement;
+    return H("div",{ style:{ position:"relative", width:"100%", height:h||120, background:"#e8e3d9", backgroundImage:"url("+JSON.stringify(MAP_IMG)+")", backgroundSize:"cover", backgroundPosition:"center", overflow:"hidden" } },
+      
+      
+      H("div",{ style:{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-90%)" } }, this.pinSvg(30, Component.C.verm)));
+  }
+
+  renderIact(m, i){
+    const h = React.createElement, C = Component.C;
+    const done = m.done;
+    const wrap = { animation:"msgIn .28s ease both", marginBottom:10 };
+    const shell = (children, w) => h("div",{ style:{ maxWidth:w||"82%", width:w?w:"82%", background:C.inBg, borderRadius:8, borderTopLeftRadius:2, overflow:"hidden", boxShadow:"0 1px .5px rgba(0,0,0,.13)", opacity: done?.62:1, pointerEvents: done?"none":"auto" } }, children);
+
+    // QUICK-REPLY / MEDIA -> stacked reply buttons
+    if (m.kind === "qr" || m.kind === "media"){
+      const oos = m.data && m.data.oos;
+      const alertBubble = oos ? h("div",{ style:{ display:"flex", justifyContent:"flex-start", marginBottom:8 } },
+        h("div",{ style:{ maxWidth:"80%", background:C.inBg, borderRadius:8, borderTopLeftRadius:2, padding:"6px 9px 8px", boxShadow:"0 1px .5px rgba(0,0,0,.13)" } },
+          h("div",{ style:{ display:"inline-flex", alignItems:"center", gap:5, background:"rgba(201,75,48,.12)", color:C.verm, fontSize:10.5, fontWeight:700, letterSpacing:".05em", padding:"2px 7px", borderRadius:4, marginBottom:5 } }, "\u23F1 " + this.t("SYMPTOM CHECK")),
+          h("div",{ style:{ fontSize:14.3, lineHeight:"19px", color:C.txt, whiteSpace:"pre-wrap" } }, this.textLines(this.t(Component.ALERT_BODY))),
+          this.bubbleMeta(false))) : null;
+      return h("div",{ key:i, style:wrap },
+        alertBubble,
+        h("div",{ style:{ display:"flex", flexDirection:"column", gap:4, maxWidth:"82%", opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
+          m.actions.map((a,k)=> h("div",{ key:k, style:{ borderRadius:8, overflow:"hidden", boxShadow:"0 1px .5px rgba(0,0,0,.13)" } },
+            this.waBtn(this.t(a.title), ()=>this.pick(m,a), a.vis || this.replyIcon())))));
+    }
+
+    // LOCATION request
+    if (m.kind === "location"){
+      return h("div",{ key:i, style:{ ...wrap, display:"flex" } },
+        shell([
+          h("div",{ style:{ padding:"9px 11px 4px", fontSize:14.3, lineHeight:"19px", color:C.txt } }, this.t(m.data.body)),
+          this.mapThumb(96),
+          h("div",{ style:{ opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
+            m.actions.map((a,k)=> h("div",{ key:k, style:{ borderTop:"1px solid #eef0f1" } },
+              this.waBtn(this.t(a.title), a.title === "Pick a different spot" ? ()=>this.openLocSheet(m,a) : ()=>this.sendCurrentLoc(m,a), this.pinSvg(17,C.green)))))
+        ]));
+    }
+
+    // CARD
+    if (m.kind === "card"){
+      const d = m.data;
+      return h("div",{ key:i, style:{ ...wrap, display:"flex" } },
+        shell([
+          d.map ? this.mapThumb(140) : !d.img ? null : h("div",{ style:{ position:"relative" } },
+            h("img",{ src:d.img, style:{ width:"100%", height:150, objectFit:"cover", display:"block" } }),
+            d.tag ? h("div",{ style:{ position:"absolute", top:9, left:9, display:"inline-flex", alignItems:"center", gap:4, background:C.verm, color:"#fff", fontSize:10.5, fontWeight:700, letterSpacing:".04em", padding:"4px 8px", borderRadius:100 } }, "\u26A0 "+d.tag.toUpperCase()) : null),
+          h("div",{ style:{ padding:"9px 12px 8px" } },
+            h("div",{ style:{ fontFamily:"Barlow,sans-serif", fontWeight:600, fontSize:16, color:C.navy } }, this.t(d.title)),
+            d.body ? h("div",{ style:{ fontSize:13.5, lineHeight:"19px", color:"#3d4d57", marginTop:3, whiteSpace:"pre-wrap" } }, this.textLines(this.t(d.body))) : null,
+            d.rows ? h("div",{ style:{ marginTop:6, display:"flex", flexDirection:"column", gap:3 } },
+              d.rows.map((r,k)=> h("div",{ key:k, style:{ fontSize:13.5, lineHeight:"19px", color:"#3d4d57" } },
+                h("span",{ style:{ fontWeight:700, color:C.navy } }, this.t(r[0])+": "), this.t(r[1]),
+                r[2] ? h("img",{ src:r[2], style:{ display:"block", width:"100%", height:118, objectFit:"cover", borderRadius:8, margin:"5px 0 3px" } }) : null))) : null,
+            d.foot ? h("div",{ style:{ marginTop:9, fontSize:13.5, lineHeight:"19px", color:"#3d4d57" } }, this.t(d.foot)) : null,
+            d.ask ? h("div",{ style:{ marginTop:9, fontSize:14.5, fontWeight:600, lineHeight:"20px", color:C.navy } }, this.t(d.ask)) : null,
+            d.emph ? h("div",{ style:{ marginTop:8, display:"inline-flex", alignItems:"center", gap:5, background:"rgba(201,75,48,.12)", color:C.verm, fontSize:10.5, fontWeight:700, letterSpacing:".05em", padding:"3px 8px", borderRadius:4 } }, this.t(d.emph).toUpperCase()) : null),
+          h("div",{ style:{ opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
+            m.actions.map((a,k)=> h("div",{ key:k, style:{ borderTop:"1px solid #eef0f1" } },
+              this.waBtn(this.t(a.title), ()=>this.pick(m,a), a.url ? this.pinSvg(15,C.green) : this.replyIcon()))))
+        ], "84%"));
+    }
+
+    // CAROUSEL
+    if (m.kind === "carousel"){
+      const cards = m.data.cards;
+      return h("div",{ key:i, style:{ ...wrap, maxWidth:"100%", opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
+        h("div",{ style:{ display:"flex", gap:8, overflowX:"auto", paddingBottom:6 } },
+          cards.map((c,k)=> h("div",{ key:k, style:{ flex:"none", width:196, display:"flex", flexDirection:"column", background:C.inBg, borderRadius:10, overflow:"hidden", boxShadow:"0 1px 2px rgba(0,0,0,.16)" } },
+            h("div",{ style:{ position:"relative" } },
+              h("img",{ src:c.img, style:{ width:"100%", height:110, objectFit:"cover", display:"block" } }),
+              h("div",{ style:{ position:"absolute", top:7, left:7, background: c.tag==="Non-venomous"?C.teal:C.verm, color:"#fff", fontSize:9.5, fontWeight:700, letterSpacing:".03em", padding:"3px 6px", borderRadius:100 } }, this.t(c.tag).toUpperCase()),
+              null),
+            h("div",{ style:{ flex:1, minHeight:62, padding:"8px 10px 6px" } },
+              h("div",{ style:{ display:"flex", alignItems:"baseline", gap:6 } },
+                h("div",{ style:{ flex:1, minWidth:0, fontFamily:"Barlow,sans-serif", fontWeight:600, fontSize:14, lineHeight:"17px", color:C.navy,
+                  display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" } }, this.t(c.title)),
+                c.match!=null ? h("div",{ style:{ flex:"none", display:"flex", alignItems:"baseline", gap:4 } },
+                  h("span",{ style:{ fontFamily:"Barlow,sans-serif", fontWeight:700, fontSize:13.5, color: c.low?C.bronze:C.navy } }, c.match+"%"),
+                  c.low ? h("span",{ style:{ fontSize:8.5, fontWeight:700, letterSpacing:".05em", color:C.bronze } }, this.t("LOW")) : null) : null),
+              h("div",{ style:{ fontSize:11.5, fontStyle:"italic", color:"#6b7a82", marginTop:2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" } }, c.sub)),
+            h("div",{ style:{ borderTop:"1px solid #eef0f1" } }, this.waBtn(this.t(c.action.title), ()=>this.pick(m,c.action), null))))));
+    }
+
+    // AWAIT free-text reply — the prompt is the bot bubble and the hint is the
+    // composer placeholder; nothing extra goes in the transcript.
+    if (m.kind === "await") return null;
+
+    // CHECKLIST (multi-select)
+    if (m.kind === "checklist"){
+      const d = m.data, sel = this.state.checkSel || {};
+      // "None of the above" is exclusive: picking it clears the list, picking a symptom clears it.
+      // "None" is exclusive WITHIN its own section only: a bystander reporting nothing visible
+      // must not wipe out what the victim already said they feel, and vice versa.
+      const groupOf = (k)=>{
+        if (k === "__noneA" || k === "__other") return 0;
+        if (k === "__noneB" || k === "__otherB") return 1;
+        const o = d.opts[k];
+        if (!o || !d.groups) return -1;
+        for (let gi=0; gi<d.groups.length; gi++) if ((d.groups[gi].opts||[]).indexOf(o) >= 0) return gi;
+        return -1;
+      };
+      const noneOf = (gi)=> gi === 0 ? "__noneA" : gi === 1 ? "__noneB" : "__none";
+      const keysOfGroup = (gi)=>{
+        if (gi < 0 || !d.groups) return d.opts.map((o,i)=>i).concat(["__other"]);
+        const ks = (d.groups[gi].opts||[]).map(o=>d.opts.indexOf(o));
+        (d.groups[gi].extra||[]).forEach(e=>{ if (String(e.key).indexOf("__none") !== 0) ks.push(e.key); });
+        return ks;
+      };
+      const toggle = (k)=>{ if (done) return; this.setState(s=>{
+        const n = { ...(s.checkSel||{}) };
+        if (String(k).indexOf("__none") === 0){
+          if (n[k]){ delete n[k]; return { checkSel:n }; }
+          keysOfGroup(groupOf(k)).forEach(x=>{ delete n[x]; });
+          n[k] = true; return { checkSel:n };
+        }
+        n[k] = !n[k]; delete n[noneOf(groupOf(k))]; return { checkSel:n }; }); };
+      const submit = ()=>{
+        if (done || m.done) return;
+        const picked = d.opts.filter((o,k)=>sel[k]);
+        const other = !!sel.__other || !!sel.__otherB;
+        const noneTicked = Object.keys(sel).some(x=>x.indexOf("__none") === 0 && sel[x]);
+        // An answer is now explicit: nothing chosen means the question has not been answered,
+        // so Continue waits rather than silently reading as "no symptoms".
+        if (!picked.length && !other && !noneTicked) return;
+        // "Something else" is a promise of detail: ask for it before moving on.
+        if (other && !m.otherAsked){
+          m.otherAsked = true;
+          this.setState(s=>({ thread: s.thread.concat([{ t:"bot", text:"What else is happening? Type it below." }]) }));
+          return;
+        }
+        const labels = picked.map(o=>o.label).concat(other ? [d.otherEcho || "Something else"] : []);
+        const echo = labels.length ? labels.join(", ") : d.none;
+        const PRI = ["sym_breath","sym_ptosis","sym_dizzy","sym_spread","sym_local","sym_none"];
+        const worst = PRI.filter(k=>picked.some(o=>o.sym===k))[0];
+        this.pick(m, { title:d.button, echo, next: (labels.length ? d.next : (d.noneNext || d.next)),
+          neuro: picked.some(o=>o.neuro) || undefined,
+          sym: worst || (labels.length ? undefined : "sym_none"),
+          symptoms: labels });
+      };
+      const plainRow = (key, label, sub)=> h("div",{ key:key, className:"wa-row", onClick:()=>toggle(key),
+        style:{ display:"flex", alignItems:"center", gap:8, padding:"9px 11px", borderRadius:8, cursor:"pointer", marginTop:5,
+          border:"1px solid "+(sel[key] ? C.teal : "#d9d9d9"), background: sel[key] ? "rgba(68,118,135,.10)" : "#fff",
+          color: sel[key] ? C.teal : C.navy, fontSize:13, fontWeight:sel[key]?600:500 } },
+        h("div",{ style:{ width:14, height:14, borderRadius:3, flex:"none", display:"flex", alignItems:"center", justifyContent:"center",
+          border:"1.5px solid "+(sel[key] ? C.teal : "#b7c0c5"), background: sel[key] ? C.teal : "transparent" } },
+          sel[key] ? h("svg",{ width:9, height:9, viewBox:"0 0 12 12", fill:"none" }, h("path",{ d:"M1.5 6.5l3 3 6-6", stroke:"#fff", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round" })) : null),
+        h("span",{ style:{ flex:1 } }, this.t(label)),
+        sub ? h("span",{ style:{ fontSize:11, color:"#8696a0" } }, this.t(sub)) : null);
+      return h("div",{ key:i, style:{ ...wrap, display:"flex" } },
+        shell([
+          h("div",{ style:{ padding:"10px 12px 4px", opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
+            h("div",{ style:{ fontSize:10.5, fontWeight:700, letterSpacing:".06em", color:"#8696a0", marginBottom:8 } }, this.t("ALL THAT APPLY")),
+            (d.groups || [{ label:null, opts:d.opts }]).map((g,gi)=> h("div",{ key:gi, style:{ marginBottom:10 } },
+              g.label ? h("div",{ style:{ fontSize:10, fontWeight:700, letterSpacing:".06em", color:C.teal, margin:"2px 0 7px" } }, this.t(g.label)) : null,
+              h("div",{ style:{ display:"flex", flexDirection:"column", gap:5 } },
+              g.opts.map((o)=> { const k = d.opts.indexOf(o); return h("div",{ key:k, className:"wa-row", onClick:()=>toggle(k),
+                style:{ display:"flex", alignItems:"center", gap:8, padding:"9px 11px", borderRadius:8, cursor:"pointer",
+                  border:"1px solid "+(sel[k] ? C.teal : "#d9d9d9"),
+                  background: sel[k] ? "rgba(68,118,135,.10)" : "#fff",
+                  color: sel[k] ? C.teal : C.navy, fontSize:13, fontWeight:sel[k]?600:500 } },
+                h("div",{ style:{ width:14, height:14, borderRadius:3, flex:"none", display:"flex", alignItems:"center", justifyContent:"center",
+                  border:"1.5px solid "+(sel[k] ? C.teal : "#b7c0c5"), background: sel[k] ? C.teal : "transparent" } },
+                  sel[k] ? h("svg",{ width:9, height:9, viewBox:"0 0 12 12", fill:"none" }, h("path",{ d:"M1.5 6.5l3 3 6-6", stroke:"#fff", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round" })) : null),
+                this.t(o.label)); }).concat((g.extra||[]).map(e=>plainRow(e.key, e.label, e.sub)))))),
+            d.other ? plainRow("__other", this.t(d.other), "type below") : null,
+            d.none === null ? null : plainRow("__none", this.t(d.none || "None of the above"))),
+          h("div",{ style:{ display:"flex", borderTop:"1px solid #eef0f1", opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
+            h("div",{ className:"wa-btn", onClick:submit, style:{ flex:1, textAlign:"center", padding:"11px 8px", color:C.green, fontSize:13.5, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" } }, this.t(d.button)))
+        ], "88%"));
+    }
+
+    // LIST-PICKER
+    if (m.kind === "list"){
+      const d = m.data;
+      return h("div",{ key:i, style:{ ...wrap, display:"flex" } },
+        shell([
+          d.map ? this.mapThumb(120) : null,
+          d.menuTop ? h("div",{ style:{ display:"flex", alignItems:"center", gap:7, padding:"10px 12px", color:"#667781", fontSize:11, fontWeight:700, letterSpacing:".07em" } },
+            h("svg",{ width:15, height:15, viewBox:"0 0 24 24", fill:"#667781" }, h("path",{ d:"M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z" })), this.t(d.button).toUpperCase()) : null,
+          h("div",{ style:{ opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
+            d.rows.map((r,k)=> h("div",{ key:k, className:"wa-row", onClick:()=>this.pick(m,r), style:{ display:"flex", alignItems:"center", gap:10, padding:"11px 12px", borderTop:"1px solid #eef0f1", cursor:"pointer" } },
+              // one list, one left edge: the slot is reserved whenever any row is illustrated
+              d.rows.some(x=>x.vis) ? h("div",{ style:{ flex:"none", display:"flex", alignItems:"center", justifyContent:"center", width:26 } }, r.vis || null) : null,
+              h("div",{ style:{ flex:1, minWidth:0 } },
+                h("div",{ style:{ fontSize:14.5, fontWeight:600, color:C.navy } }, this.t(r.title)),
+                h("div",{ style:{ fontSize:12.5, color:"#667781", marginTop:2 } }, this.t(r.desc))),
+              r.noChevron ? null : h("svg",{ width:9, height:15, viewBox:"0 0 8 14", fill:"none" }, h("path",{ d:"M1 1l6 6-6 6", stroke:"#b7c0c5", strokeWidth:1.8, strokeLinecap:"round" }))))),
+          (d.menuTop || !d.button) ? null : h("div",{ style:{ display:"flex", alignItems:"center", justifyContent:"center", gap:7, padding:"10px 8px", borderTop:"1px solid #eef0f1", color:C.green, fontSize:13.5, fontWeight:600 } },
+            h("svg",{ width:16, height:16, viewBox:"0 0 24 24", fill:C.green }, h("path",{ d:"M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z" })), this.t(d.button))
+        ], "84%"));
+    }
+    return null;
+  }
+
+  // ---------- inspector ----------
+  hi(obj){
+    const json = JSON.stringify(obj, null, 2);
+    const h = React.createElement;
+    const re = /("(?:\\.|[^"\\])*"(\s*:)?)|(\b(?:true|false|null)\b)|(-?\d+(?:\.\d+)?)/g;
+    const out = []; let last = 0, m2, idx = 0;
+    while ((m2 = re.exec(json)) !== null){
+      if (m2.index > last) out.push(h("span",{ key:idx++, style:{ color:"#8aa0ad" } }, json.slice(last, m2.index)));
+      let col = "#c7e0cf", tok = m2[0];
+      if (m2[1]){ col = m2[2] ? "#6fd0c6" : "#e6d3a3"; }
+      else if (m2[3]){ col = "#c98b6a"; }
+      else if (m2[4]){ col = "#c98b6a"; }
+      out.push(h("span",{ key:idx++, style:{ color:col } }, tok));
+      last = re.lastIndex;
+    }
+    if (last < json.length) out.push(h("span",{ key:idx++, style:{ color:"#8aa0ad" } }, json.slice(last)));
+    return out;
+  }
+
+  seamPanel(letter, title, note, obj){
+    const h = React.createElement;
+    const mock = letter === "B";
+    return h("div",{ style:{ border:"1px solid rgba(111,208,198,.28)", borderRadius:11, overflow:"hidden", background:"rgba(111,208,198,.04)" } },
+      h("div",{ style:{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", padding:"11px 14px", background:"rgba(111,208,198,.07)", borderBottom:"1px solid rgba(111,208,198,.2)" } },
+        h("span",{ style:{ fontFamily:"'Roboto Mono',monospace", fontSize:12.5, color:"#6fd0c6", fontWeight:500 } }, title),
+        h("span",{ style:{ flex:1 } }),
+        h("span",{ style:{ fontFamily:"'Roboto Mono',monospace", fontSize:11, padding:"3px 9px", borderRadius:6,
+          background: mock ? "#7a3d18" : "#1c5c58", color: mock ? "#f4b98a" : "#8ff0e4" } }, mock ? "MODULE OUTPUT" : "EMITTED")),
+      h("div",{ style:{ padding:"9px 14px", fontSize:12, lineHeight:"17px", color:"#9ed6cf", background:"rgba(111,208,198,.05)", borderBottom:"1px solid rgba(111,208,198,.14)" } }, note),
+      h("pre",{ style:{ margin:0, padding:"13px 14px", fontFamily:"'Roboto Mono',monospace", fontSize:11.7, lineHeight:"17px", color:"#c7e0cf", overflowX:"auto", whiteSpace:"pre" } }, this.hi(obj)),
+      h("div",{ style:{ padding:"10px 14px", borderTop:"1px solid rgba(111,208,198,.14)", fontSize:12, color:"#7f97a6" } },
+        mock ? "Design must NOT implement ranking, symptom\u2192syndrome mapping, or any clinical value in this payload. Contract: SnakeIQ-ID-Module-Interface-Spec.md \u00b7 Seam B."
+             : "Contract: SnakeIQ-ID-Module-Interface-Spec.md \u00b7 Seam A."));
+  }
+
+  renderInspector(){
+    const h = React.createElement, C = Component.C;
+    const turn = this.state.turn;
+    if (!turn) return h("div",{ style:{ color:"#5f7787", fontSize:13 } }, "Loading\u2026");
+
+    const badge = (label, val, kind) => {
+      const map = { IS:["#1c7c54","#7ff0bd"], OOS:["#7a3d18","#f4b98a"], "\u2014":["#2a4152","#9bb4c2"], REQ:["#7a2418","#f0a08e"] };
+      const c = map[val] || ["#2a4152","#9bb4c2"];
+      return h("span",{ style:{ display:"inline-flex", alignItems:"center", gap:5, background:c[0], color:c[1], fontFamily:"'Roboto Mono',monospace", fontSize:11, padding:"3px 9px", borderRadius:6 } },
+        h("span",{ style:{ opacity:.7 } }, label), h("b",null, val));
+    };
+
+    return h("div",{ style:{ display:"flex", flexDirection:"column", gap:18 } },
+      h("div",{ style:{ display:"flex", alignItems:"baseline", gap:9, flexWrap:"wrap" } },
+        h("span",{ style:{ fontFamily:"Barlow,sans-serif", fontWeight:600, fontSize:15, color:"#fff" } }, turn.title),
+        h("span",{ style:{ fontFamily:"'Roboto Mono',monospace", fontSize:11.5, color:"#5f7787" } }, turn.payloads.length + " content template" + (turn.payloads.length>1?"s":"") + " this turn")),
+
+      turn.payloads.map((p,pi)=> h("div",{ key:pi, style:{ border:"1px solid rgba(255,255,255,.09)", borderRadius:11, overflow:"hidden", background:"rgba(255,255,255,.02)" } },
+        h("div",{ style:{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", padding:"11px 14px", background:"rgba(255,255,255,.03)", borderBottom:"1px solid rgba(255,255,255,.07)" } },
+          h("span",{ style:{ fontFamily:"'Roboto Mono',monospace", fontSize:12.5, color:"#e6d3a3", fontWeight:500 } }, p.content_type),
+          h("span",{ style:{ flex:1 } }),
+          badge("session", p.session), badge("approval", p.approval)),
+
+        p.note ? h("div",{ style:{ padding:"9px 14px", fontSize:12, lineHeight:"17px", color:"#c7b48f", background:"rgba(201,113,63,.09)", borderBottom:"1px solid rgba(255,255,255,.06)" } }, "\u261B " + p.note) : null,
+
+        h("pre",{ style:{ margin:0, padding:"13px 14px", fontFamily:"'Roboto Mono',monospace", fontSize:11.7, lineHeight:"17px", color:"#c7e0cf", overflowX:"auto", whiteSpace:"pre" } }, this.hi(p.json)),
+
+        h("div",{ style:{ padding:"10px 14px", borderTop:"1px solid rgba(255,255,255,.07)" } },
+          h("div",{ style:{ fontSize:10.5, letterSpacing:".08em", color:"#5f7787", fontWeight:700, marginBottom:7 } }, "GOVERNING LIMIT"),
+          h("div",{ style:{ fontSize:12, color:"#9fb4c1", marginBottom: p.checks.length?10:0 } }, p.limit),
+          p.checks.length ? h("div",{ style:{ display:"flex", flexDirection:"column", gap:4 } },
+            p.checks.map((c,ci)=> h("div",{ key:ci, style:{ display:"flex", alignItems:"center", gap:8, fontFamily:"'Roboto Mono',monospace", fontSize:11.5 } },
+              h("span",{ style:{ color: c.ok?"#5fd6a0":"#f08e7c", width:14 } }, c.ok?"\u2713":"\u2715"),
+              h("span",{ style:{ flex:1, color:"#8aa0ad", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } }, c.label),
+              h("span",{ style:{ color: c.ok?"#7f97a6":"#f08e7c" } }, c.len + "/" + c.limit)))) : null)
+      )),
+
+      this.state.seamA ? this.seamPanel("A", "\u2197 SEAM A \u00b7 Design \u2192 ID module",
+        "Emitted on \u201cID snake by description\u201d, then re-sent with each key answer. Design owns location and the syndromic triage; syndromicPriors is symptoms only and is omitted when triage never ran; the key answers stay inside the module session, not on this payload. victim is fixed to \u201cself\u201d \u2014 the bot no longer asks, since no copy branched on the answer.",
+        this.seamAPayload()) : null,
+
+      this.state.seamB ? this.seamPanel("B", "\u2199 SEAM B \u00b7 ID module \u2192 Design",
+        "Live engine output, computed in snakeiq-id-module.js from species.csv (61 species). Ranking, confidence, venom status, syndrome class, antivenom, alertIntervalMin and firstCheckDueMin are the module\u2019s; the screens above render them unchanged. Clinical fields follow the Eswatini 2021 guidelines and are pending Lachesis sign-off. Design resumes at handBackTo.",
+        this.seamBPayload()) : null,
+
+      h("div",{ style:{ marginTop:2, fontSize:11.5, lineHeight:"17px", color:"#5f7787", fontFamily:"'Roboto Mono',monospace" } },
+        "GET https://content.twilio.com/v1/Content \u2014 diff these against the deployed bot\u2019s templates.")
+    );
+  }
+}
+
+/* Presentation for the module's key options: swatches, place icons, marking
+   sketches, and spelled-out lengths. The module owns the questions and values;
+   Design owns how they look. */
+const KEY_LABEL = {
+  key_size: { tiny:"Under 30 centimetres", small:"Under 1 metre", medium:"1 to 2 metres",
+    large:"Over 2 metres", any:"Not sure" }
+};
+const KEY_BUTTON = { key_size:"" };   // the prompt already says to choose a length
+const SWATCH = { dark:"#1b1b1b", brown:"#8a5a2b", green:"#4a7c3f", grey:"#8c9196",
+  yellow:"#c9a227", red:"#9c3b2a", olive:"#6c6f3f", cream:"#e0d3ba" };
+function keyVisual(qid, v){
+  const h = React.createElement;
+  const box = (kids, extra) => h("div",{ style:{ width:22, height:22, borderRadius:4, border:"1px solid rgba(0,0,0,.18)", overflow:"hidden", ...(extra||{}) } }, kids);
+  const svg = (kids) => h("svg",{ width:22, height:22, viewBox:"0 0 24 24", fill:"none" }, kids);
+  if (qid === "key_colour"){
+    if (v === "banded") return box(null, { background:"repeating-linear-gradient(135deg,#3a2d22 0 4px,#d8c9a8 4px 8px)" });
+    if (v === "other") return box(null, { background:"conic-gradient(#8a5a2b,#4a7c3f,#8c9196,#1b1b1b,#8a5a2b)" });
+    if (v === "any") return null;
+    return SWATCH[v] ? box(null, { background:SWATCH[v] }) : null;
+  }
+  if (qid === "key_habitat"){
+    const st = { stroke:"#447687", strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round" };
+    if (v === "water") return svg([h("path",{ key:1, d:"M2 14c3-3 5-3 8 0s5 3 8 0", ...st }), h("path",{ key:2, d:"M2 19c3-3 5-3 8 0s5 3 8 0", ...st })]);
+    if (v === "tree") return svg([h("path",{ key:1, d:"M12 20v-5", ...st }), h("path",{ key:2, d:"M12 3l5 8H7l5-8zM12 8l4 7H8l4-7z", ...st })]);
+    if (v === "grass") return svg([h("path",{ key:1, d:"M12 21c0-5 1-8 3-11M12 21c0-5-1-8-3-11M12 21c0-4 3-7 6-9M12 21c0-4-3-7-6-9", ...st })]);
+    if (v === "rocky") return svg([h("path",{ key:1, d:"M2 19l6-9 4 5 3-4 7 8H2z", ...st })]);
+    if (v === "building") return svg([h("path",{ key:1, d:"M4 20V9l8-5 8 5v11", ...st }), h("path",{ key:2, d:"M10 20v-6h4v6", ...st })]);
+    if (v === "underground") return svg([h("path",{ key:1, d:"M2 10h20", ...st }), h("path",{ key:2, d:"M6 10c0 4 3 6 6 6s6-2 6-6", ...st }), h("path",{ key:3, d:"M4 6l3 2M12 5v3M20 6l-3 2", ...st })]);
+    return null;
+  }
+  if (qid === "key_hood"){
+    const st = { stroke:"#11344F", strokeWidth:1.6, strokeLinecap:"round", strokeLinejoin:"round" };
+    // The two answers are drawn from different viewpoints on purpose. A hood only
+    // reads as a hood head-on, so the hooded snake faces the viewer and the flare
+    // is the whole silhouette. The lifted snake is drawn in profile, where there is
+    // no width behind the head to mistake for a hood — just a thin rising S.
+    if (v === "hood") return svg([
+      h("path",{ key:1, d:"M12 6.4c-4.1.5-6.6 3-6.6 5.7 0 2.4 2.7 3.9 6.6 3.9s6.6-1.5 6.6-3.9c0-2.7-2.5-5.2-6.6-5.7z", ...st }),
+      h("ellipse",{ key:2, cx:12, cy:4.1, rx:2, ry:2.3, fill:"#fff", ...st }),
+      h("circle",{ key:3, cx:11.2, cy:3.8, r:.6, fill:"#11344F" }),
+      h("circle",{ key:4, cx:12.8, cy:3.8, r:.6, fill:"#11344F" }),
+      h("path",{ key:5, d:"M12 16v1.7", ...st }),
+      h("path",{ key:6, d:"M11.6 17.7c-2.3-.4-4 .4-4 1.6 0 1.2 1.9 1.9 4.3 1.9h3.3", ...st })]);
+    if (v === "raised") return svg([
+      h("path",{ key:1, d:"M11.9 6.1c1.7 1.7 1.4 3.5 0 5.1-1.4 1.6-1.7 3.2-.5 4.7", ...st }),
+      h("path",{ key:2, d:"M11.5 15.9c-2.2-.3-3.9.4-3.9 1.6 0 1.3 2.1 2 4.5 2 2.2 0 4-.6 5.3-1.5", ...st }),
+      h("ellipse",{ key:3, cx:10.3, cy:4.2, rx:2.4, ry:1.8, fill:"#fff", transform:"rotate(-24 10.3 4.2)", ...st }),
+      h("circle",{ key:4, cx:11.1, cy:3.7, r:.6, fill:"#11344F" })]);
+    return null;   // “Neither” gets no illustration
+  }
+  if (qid === "key_pattern"){
+    const st = { stroke:"#11344F", strokeWidth:1.7, strokeLinecap:"round", strokeLinejoin:"round" };
+    if (v === "geometric") return svg([h("path",{ key:1, d:"M4 8l4 4 4-4 4 4 4-4M4 16l4 4 4-4 4 4 4-4", ...st })]);
+    if (v === "blotched") return svg([h("circle",{ key:1, cx:8, cy:8, r:2.6, fill:"#11344F" }), h("circle",{ key:2, cx:16, cy:11, r:3.2, fill:"#11344F" }), h("circle",{ key:3, cx:9, cy:17, r:2.2, fill:"#11344F" })]);
+    return null;   // \u201cplain\u201d gets no illustration
+  }
+  return null;
+}
+
+/* =====================================================================
+   Design-side data. The species table, the key, the ranking, confidence,
+   antivenom and the alert cadence all live in the MODULE (snakeiq-id-module.js,
+   loaded from species.csv). Nothing clinical is computed here.
+   ===================================================================== */
+const SESSION_ID = "wa_27_82761xxxx_4831";
+const CHAT_START_MIN = 14*60 + 34;   // the session's own clock, shown in the status bar
+
+// ---------- First aid 1 (CMS-owned) ----------
+// The instruction that fires the moment a bite is known, before any identification.
+// Keyed by species so the CMS can carry species-specific wording; an unidentified bite
+// falls back to the generic entry. A species whose entry is empty has NO First aid 1 —
+// the turn is skipped entirely rather than padded with generic text.
+// No tourniquet ruling here: whether to bind a limb is species guidance, and the CMS
+// species entry owns it. A blanket prohibition would contradict the entry that follows.
+// Limb POSITION is syndrome-specific for the same reason \u2014 "below the heart" belongs to the
+// species entry, not to a turn that fires before any ID exists. Pre-ID we say only what
+// holds for every syndrome: immobilise, and do no harm.
+const FA1_STEPS = "\n\u2022 Keep calm. Movement spreads venom\n\u2022 Keep the body part that has been bitten as still as possible\n\u2022 Do NOT cut or suck the bite";
+const FIRSTAID1 = {
+  // The generic entry is the only one that tells anyone not to wait for an ID \u2014 the
+  // species entries are shown when the snake is already named, and would contradict it.
+  generic: { open:"\u2022 Go to the nearest hospital with antivenom" },
+  mamba_black: { extra:"Call ahead \u2014 this bite can affect breathing, and the hospital needs time to prepare antivenom." },
+  cobra_mozam: { extra:"Do NOT bandage tightly \u2014 this venom damages tissue and pressure makes it worse." },
+  adder_puff: { extra:"Remove rings, watches and tight clothing now \u2014 swelling will be severe." },
+  python_southern: null
+};
+const FA1 = (sid) => {
+  const k = (sid && FIRSTAID1.hasOwnProperty(sid)) ? sid : "generic";
+  const e = FIRSTAID1[k];
+  if (!e) return null;
+  const rec = k === "generic" ? null : SP(k);
+  const av = (rec && rec.av && rec.av.required) ? rec.av.product : null;
+  const open = e.open || ("\u2022 Go to the nearest hospital with " + (av ? av.toLowerCase() + " antivenom" : "antivenom"));
+  return { id:k, species: k !== "generic",
+    body: "*To Do:*\n" + open + FA1_STEPS + (e.extra ? "\n\u2022 " + e.extra : "") };
+};
+const ID_PROMPT_COPY = "*Identify the snake*\n\n#1 priority is to get to the hospital, but if you can ID the snake, it will help your treatment.\n\nA photo is the best way to identify the snake and see if it is dangerous.\n\nOnly take a photo if you can do it safely";
+// No bite: the question is what the snake is, not whether it is dangerous.
+const ID_PROMPT_COPY_NOBITE = "*Identify the snake*\n\nA photo is the best way to identify the snake.\n\nOnly take a photo if you can do it safely";
+const ID = () => window.SnakeIQID;
+
+/* Photo-ID is the module's other entry point; its ranked matches are stubbed
+   here because the vision model isn't part of this prototype. Confidence is
+   shown only on this path, and only at the choice point.
+
+   The numbers are shaped like a real classifier's output over one image, not
+   four independent scores: they are a distribution (0.99 here, the remaining
+   0.01 spread across the other 57 species in the set), so they fall away
+   steeply instead of clustering in the 80s. The Mozambique spitting cobra is
+   the one real contender \u2014 a slender grey-olive snake photographed at distance
+   genuinely confuses the two elapids \u2014 while the stout patterned puff adder
+   and the blotched python are poor matches for the same silhouette and score
+   accordingly. Only the top candidate clears the 80% LOW CONFIDENCE threshold,
+   so the chip appears on the three alternates and the ranking still carries a
+   clear leader. */
+/* The only user field WhatsApp can supply on its own: the profile name on the sending
+   number. Everything else about the person is native-app territory. */
+const PROFILE_NAME = "Nadia Isaacs";
+
+const LOCAL_NAMES = { mamba_black:["Swartmamba","Imamba emnyama"],
+  cobra_mozam:["Mosambiekse spoegkobra","Iphimpi"], adder_puff:["Pofadder","Irhamba"],
+  python_southern:["Suidelike luislang","Inhlwathi"] };
+
+const MOCK_PHOTO_MATCHES = [["mamba_black",0.86],["cobra_mozam",0.09],["adder_puff",0.03],["python_southern",0.02]];
+
+/* Immobilisation wording per the module's species-specific firstAid value
+   (guideline Annex 6). Design owns the words, the module owns which one. */
+const IMMOB = {
+  "broad-tourniquet": "For this type of snake only, tie a wide tourniquet (tight bandage or band) above the bite.",
+  "pressure-bandage": "Apply a firm pressure bandage over the bite and immobilise the limb.",
+  "elevation": "Elevate the limb. Do NOT apply a tourniquet or pressure bandage.",
+  "limb-below-heart": "Keep the bitten limb still and below heart level.",
+  "none": "Keep the bitten limb still."
+};
+
+// Species photography (repo: img/species) keyed by speciesId; generic wide shot covers the rest.
+const SP_PHOTOS = { mamba_black: __R.sp_mambaBlack || "assets/species/mamba_black.jpg", cobra_mozam: __R.sp_cobraMozam || "assets/species/cobra_mozam.jpg", grass_olive: __R.sp_grassOlive || "assets/species/grass_olive.jpg", mole: __R.sp_mole || "assets/species/mole.jpg", tiger_eastern: __R.sp_tigerEastern || "assets/species/tiger_eastern.jpg" };
+const SP_IMG = (id) => SP_PHOTOS[id] || SNAKE_PHOTO;
+
+// Display adapter over the module's species record — presentation only.
+const SP = (id) => {
+  const m = ID(), s = m ? m.byId(id) : null;
+  if (!s) return { sid:id, name:"Unknown snake", sci:"", status:"Unknown", venom:true, fast:false,
+    about:"", interval:240, immob:IMMOB.none, care:"emergency", tier:"deadly", av:null };
+  return { sid:s.speciesId, name:s.commonName, sci:s.scientificName, status:s.venomStatusLabel,
+    venom: s.venomStatus === "venomous", fast: s.alertIntervalMin <= 10, about: s.notes,
+    interval: s.alertIntervalMin, immob: IMMOB[s.firstAid] || IMMOB.none,
+    av: s.antivenom, tier: s.tier, care: s.careLevel };
+};
+
+/* Facility coordinates, so a real GPS fix produces a real distance instead of the
+   scripted one. Real Seam C data would carry these per facility. */
+const FACILITIES = {
+  swellendam:{ lat:-34.0234, lng:20.4411 },
+  otto:      { lat:-34.5321, lng:20.0403 },
+  worcester: { lat:-33.6465, lng:19.4485 }
+};
+</script>
+
+</body>
+</html>
