@@ -177,7 +177,7 @@
         <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
             <div style="display:flex; flex-direction:column; gap:7px;">
-              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 36 &middot; OFFLINE</div>
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 39 &middot; OFFLINE</div>
               <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
               <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
             </div>
@@ -283,7 +283,7 @@
           <div id="tk-strip" style="flex:none; display:flex; align-items:center; gap:7px; background:#11344F; padding:7px 12px 9px;">
             <span style="flex:none; width:8px; height:8px; border-radius:50%; background:{{ logDot }};"></span>
             <span onClick="{{ onStripClose }}" title="Hide the controls" style="flex:1; min-width:0; font:600 11px/1.4 'Roboto Mono',monospace; letter-spacing:.04em; color:rgba(238,233,224,.82); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;">{{ logStatus }} &nbsp;&times;</span>
-            <button onClick="{{ onExportLog }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">CSV</button>
+            <button onClick="{{ onExportLog }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">TSV</button>
             <button onClick="{{ onExportLabels }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">TABBED</button>
             <button onClick="{{ onSessionAction }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">{{ sessionActionLabel }}</button>
           </div>
@@ -417,7 +417,7 @@ class Component extends DCLogic {
   // reload or a phone locking mid-run does not lose the session.
   logKey(){ return "snakeiq_tk_log_" + this.state.sessionId; }
 
-  // Sync tone. The whole point of the CSV is timings, and timings are only useful next to
+  // Sync tone. The whole point of the log is timings, and timings are only useful next to
   // what the participant said \u2014 so the session opens with an audible anchor the external
   // recorder picks up. Find the tone in the waveform and elapsed_ms 0 is that instant; the
   // closing tone gives a second anchor, so recorder drift can be stretched out rather than
@@ -426,7 +426,7 @@ class Component extends DCLogic {
   // audio when the page is backgrounded (the Maps hand-off does exactly that), the context
   // clock stops, and the queued notes all fire whenever the user returns to Safari. So the
   // context is confirmed running BEFORE anything is scheduled, and `then(ok)` fires at the
-  // real onset — the caller logs from there, so the CSV timestamp is the sounding instant.
+  // real onset — the caller logs from there, so the logged timestamp is the sounding instant.
   tone(kind, then){
     const done = (ok)=>{ if (then) then(ok); };
     try {
@@ -518,11 +518,17 @@ class Component extends DCLogic {
     this.setState({ logCount: this.log.length });
   }
 
-  logCsv(){
-    const esc = v => '"' + String(v).replace(/"/g,'""') + '"';
-    const rows = (this.log || []).map((r,i)=>[i+1, this.state.pid, r.ms, (r.ms/1000).toFixed(2), r.event, r.detail].map(esc).join(","));
+  // Tab-separated, not comma. Excel splits a .csv on the SYSTEM list separator, which on a
+  // South African locale is usually the semicolon — a double-click there drops the whole
+  // row into column A. Tabs split correctly in Excel, Sheets and pandas regardless of
+  // locale, and the label track was already tab-separated, so both exports now agree.
+  // No quoting: tabs and newlines are stripped from every field instead, which keeps the
+  // file trivially parseable by anything that splits on "\t".
+  logTsv(){
+    const cell = v => String(v).replace(/[\t\r\n]+/g, " ").trim();
+    const rows = (this.log || []).map((r,i)=>[i+1, this.state.pid, r.ms, (r.ms/1000).toFixed(2), r.event, r.detail].map(cell).join("\t"));
     return ["# anchors: 0 ms = ascending pair (session start) · part1_end = descending pair · part2_start = three ascending · session_end = one tone",
-      "seq,participant,elapsed_ms,elapsed_s,event,detail"].concat(rows).join("\n");
+      ["seq","participant","elapsed_ms","elapsed_s","event","detail"].join("\t")].concat(rows).join("\n") + "\n";
   }
 
   // Audacity's label importer reads TAB-separated "start<TAB>end<TAB>text" and nothing else —
@@ -546,7 +552,7 @@ class Component extends DCLogic {
 
   // Two buttons, not one: iOS suppresses a second programmatic download that is not
   // tied to its own tap, so a chained labels file dies silently.
-  exportLog(){ this.save("snakeiq_" + this.state.sessionId + ".csv", this.logCsv(), "text/csv"); }
+  exportLog(){ this.save("snakeiq_" + this.state.sessionId + ".tsv", this.logTsv(), "text/tab-separated-values"); }
   exportLabels(){ this.save("snakeiq_" + this.state.sessionId + "_labels.txt", this.logLabels(), "text/plain"); }
 
   // ---- Part boundary -------------------------------------------------------------
@@ -606,15 +612,29 @@ class Component extends DCLogic {
     this.setState({ stripOpen: false });
   }
 
-  endSession(){
-    this.tone("end", (ok)=>this.logEvent("sync_tone", ok ? "end tone \u00b7 2093 \u2192 1760 \u2192 1320 Hz \u00b7 260 ms each \u00b7 closing anchor is the FIRST onset" : "SILENT \u2014 no closing anchor in the audio", true));
+  // save=true exports the log from the same tap that ended the session.
+  endSession(save){
+    // The export waits for the closing tone's callback. The tone reports its real onset
+    // ~20 ms after the tap, and that row IS the fourth alignment anchor — exporting
+    // synchronously wrote a file whose last row was session_end, with the closing anchor
+    // missing from the very file the header documents it in. Safari's user activation
+    // outlives 20 ms comfortably, so the download still counts as gesture-initiated.
+    let saved = false;
+    const saveOnce = ()=>{ if (save && !saved){ saved = true; this.exportLog(); } };
+    this.tone("end", (ok)=>{
+      this.logEvent("sync_tone", ok ? "end tone \u00b7 2093 \u2192 1760 \u2192 1320 Hz \u00b7 260 ms each \u00b7 closing anchor is the FIRST onset" : "SILENT \u2014 no closing anchor in the audio", true);
+      saveOnce();
+    });
     this.logEvent("session_end", this.state.logCount + " events");
     this.setState({ sessionEnded: true });
+    // Belt and braces: if the audio context never reports back, the session still saves.
+    // A file one row short beats no file at the end of a field session.
+    setTimeout(saveOnce, 700);
   }
 
   // Back to the start screen for the next participant. The finished log stays in local
   // storage under its own session id, so an un-exported run is recoverable rather than
-  // overwritten \u2014 but the strip keeps CSV live after END so it rarely comes to that.
+  // overwritten \u2014 but the strip keeps the export live after END so it rarely comes to that.
   newSession(){
     this.eng = null; this.typeRowShown = false; this.photoBusy = false;
     if (this.tick){ clearInterval(this.tick); this.tick = null; }
@@ -2138,12 +2158,17 @@ class Component extends DCLogic {
       const h = React.createElement;
       thread.push(this.state.sessionEnded
         ? h("div",{ key:"endtest", style:{ margin:"38px 0 10px", textAlign:"center", fontFamily:"'Roboto Mono',monospace", fontSize:11, letterSpacing:".06em", color:"#6b7a82" } },
-            "SESSION ENDED \u00b7 EXPORT BOTH FILES FROM THE BAR BELOW")
-        : h("div",{ key:"endtest", style:{ margin:"38px 0 10px", display:"flex", justifyContent:"center" } },
-            h("button",{ onClick:()=>this.endSession(),
+            "SESSION ENDED \u00b7 TSV SAVED \u00b7 LABELS FROM THE BAR BELOW")
+        : h("div",{ key:"endtest", style:{ margin:"38px 0 10px", display:"flex", flexDirection:"column", alignItems:"center", gap:8 } },
+            // One tap: closing anchor, session_end row, and the TSV download. Saving from
+            // the same tap matters — iOS drops a programmatic download that is not tied to
+            // a user gesture, which is how a finished session could end up unexported.
+            h("button",{ onClick:()=>this.endSession(true),
               style:{ minHeight:52, padding:"0 30px", border:"none", borderRadius:8, background:"#C94B30", color:"#fff",
                 font:"600 16px/1.2 Barlow,sans-serif", letterSpacing:".03em", cursor:"pointer", boxShadow:"0 2px 8px rgba(0,0,0,.18)" } },
-              "END TEST")));
+              "END & SAVE FILE"),
+            h("div",{ style:{ fontFamily:"'Roboto Mono',monospace", fontSize:10, letterSpacing:".05em", color:"#6b7a82", textAlign:"center" } },
+              "TSV downloads on tap · LABELS from the bar below")));
     }
     return {
       thread,
@@ -2172,7 +2197,7 @@ class Component extends DCLogic {
       logDot: this.state.sessionEnded ? "rgba(238,233,224,.34)" : "#C94B30",
       sessionFootnote: this.state.sessionId
         ? "Session " + this.state.sessionId
-        : "Stays on this phone. Export before closing the tab — CSV plus an Audacity label track.",
+        : "Stays on this phone. Export before closing the tab — TSV plus an Audacity label track.",
       logStatus: this.state.pid + " \u00b7 PART " + (this.state.phase || 1) + " \u00b7 "
         + this.state.logCount + " events \u00b7 "
         + (this.state.sessionEnded ? "ended \u2014 export both files" : this.elapsedLabel()),

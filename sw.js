@@ -9,7 +9,7 @@
    by content in practice and are the bulk of the payload.
 
    Bump CACHE on every upload. */
-const CACHE = "snakeiq-testkit-2026-08-31-b35";
+const CACHE = "snakeiq-testkit-2026-08-31-b39";
 
 const PRECACHE = [
   "testkit.html",
