@@ -123,6 +123,10 @@
     //    never rubber-bands behind the frame. A tap is never a drag: finger jitter under
     //    ~10px is left alone, because cancelling those touchmoves is what stopped iOS
     //    from synthesising the click on reply buttons.
+    // Every control a finger is meant to hit — the chat's reply buttons and list rows are
+    // divs, the testkit's own controls are real buttons.
+    var TAPPABLE = '.wa-btn, .wa-row, button, [role="button"], label[for]';
+
     var t_start = null;
     document.addEventListener('touchstart', function(e){
       var t = e.touches[0];
@@ -147,36 +151,9 @@
       if (e.cancelable) e.preventDefault();
     }, { passive:false });
 
-    // Every control a finger is meant to hit. The chat's reply buttons and list rows are
-    // divs, the testkit's own controls are real buttons — iOS withholds the synthetic
-    // click on both in this full-screen context, so both go through the same fallback.
-    var TAPPABLE = '.wa-btn, .wa-row, button, [role="button"], label[for]';
-
-    // 4. Tap fallback. In the full-screen field build iOS intermittently withholds the
-    //    synthetic click on the chat's reply buttons and list rows, which reads as a dead
-    //    control. On a clean, short tap we fire the click ourselves — and swallow the
-    //    native one if it arrives after, so a tap never counts twice.
-    var last_synth = 0;
-    document.addEventListener('touchend', function(e){
-      if (window.innerWidth > 900 || !t_start) return;
-      var t = e.changedTouches && e.changedTouches[0];
-      if (!t) return;
-      var moved = Math.abs(t.clientX - t_start.x) > 12 || Math.abs(t.clientY - t_start.y) > 12;
-      if (moved || Date.now() - t_start.t > 700) return;
-      var hit = t_start.el && t_start.el.closest && t_start.el.closest(TAPPABLE);
-      if (!hit || hit.disabled) return;
-      last_synth = Date.now();
-      hit.click();
-    }, { passive:true });
-
-    document.addEventListener('click', function(e){
-      if (window.innerWidth > 900) return;
-      if (!e.isTrusted || Date.now() - last_synth > 500) return;
-      var hit = e.target && e.target.closest && e.target.closest(TAPPABLE);
-      if (!hit) return;
-      e.stopPropagation();
-      e.preventDefault();
-    }, true);
+    // No synthetic-click fallback. There was one here; once the touchmove guard above
+    //    stopped cancelling taps, iOS synthesised the click on its own and the fallback
+    //    fired a second one — every reply landed twice.
   })();
   </script>
 </helmet>
@@ -192,7 +169,7 @@
         <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
             <div style="display:flex; flex-direction:column; gap:7px;">
-              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 32 &middot; WEB</div>
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 33 &middot; WEB</div>
               <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
               <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
             </div>
