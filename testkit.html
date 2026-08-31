@@ -169,7 +169,7 @@
         <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
             <div style="display:flex; flex-direction:column; gap:7px;">
-              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 33 &middot; WEB</div>
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 34 &middot; WEB</div>
               <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
               <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
             </div>
@@ -754,7 +754,6 @@ class Component extends DCLogic {
 
   // ---------- palette ----------
   static ALERT_BODY = "*Symptom check*\n\nCan you answer a few questions about your snake bite symptoms?";
-  static PROTO_NOTE = "Elapsed time = species symptom check interval. If victim is waiting for transportation or en route, this might be a good time to collect missing information.";
   // South Africa writes and speaks the 24-hour clock, so every clock time in the flow is
   // 24-hour. The victim may still TYPE am/pm — parseTime accepts either.
   static fmt24(mins){ const H = Math.floor(mins/60), M = mins%60;
@@ -1592,7 +1591,11 @@ class Component extends DCLogic {
       };
 
       case "symptom_alert": return {
-        msgs: [{ t:"pnote", text: Component.PROTO_NOTE }],
+        // The victim comes back to the SAME thread — one conversation per number, so the
+        // check-in lands under everything already said, and the immobilisation advice and
+        // hospital name are still there to scroll back to. WhatsApp marks the return with
+        // its unread divider; nothing is cleared or restarted.
+        msgs: [{ t:"unread" }],
         iact: { t:"iact", kind:"qr", data:{ oos:true }, actions:[
           { title:"OK", next:"bite_time" },
           { title:"Not now", next:"sc_dismissed" }
@@ -2224,6 +2227,10 @@ class Component extends DCLogic {
 
     if (m.t === "sys") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"6px 0 10px" } },
       h("div",{ style:{ background:"#fdf4c9", color:"#54656f", fontSize:11.5, lineHeight:"16px", textAlign:"center", padding:"7px 12px", borderRadius:8, maxWidth:"85%", boxShadow:"0 1px .5px rgba(0,0,0,.1)" } }, this.t(m.text)));
+
+    if (m.t === "unread") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"16px 0 10px" } },
+      h("div",{ style:{ width:"100%", background:"#e2f0d6", color:"#54656f", fontSize:10.5, fontWeight:700, letterSpacing:".08em", textAlign:"center", padding:"6px 12px" } },
+        this.state.lang === "af" ? "1 ONGELESE BOODSKAP" : "1 UNREAD MESSAGE"));
 
     if (m.t === "day") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"4px 0 10px" } },
       h("div",{ style:{ background:"#e2f0d6", color:"#54656f", fontSize:11.5, fontWeight:600, padding:"5px 12px", borderRadius:8, letterSpacing:".04em" } }, "TODAY"));
