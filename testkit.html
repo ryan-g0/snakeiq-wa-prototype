@@ -169,7 +169,7 @@
         <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
             <div style="display:flex; flex-direction:column; gap:7px;">
-              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 34 &middot; WEB</div>
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 35 &middot; WEB</div>
               <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
               <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
             </div>
@@ -572,7 +572,10 @@ class Component extends DCLogic {
     this.fireAnchor();
     // The phone goes back to the participant here, so the controls close with it.
     this.closeStrip();
-    this.setState({ phase: 2, interstitial: false }, ()=>this.enter("symptom_alert", true));
+    // NOT a reset: the check-in continues the same WhatsApp thread, so the whole earlier
+    // conversation stays above it. Passing the initial flag here reseeded the thread and
+    // left the victim looking at nothing but their own "Help — snake!".
+    this.setState({ phase: 2, interstitial: false }, ()=>this.enter("symptom_alert", false));
   }
 
   // Collapsed by default so the participant cannot reach END or an export while holding
