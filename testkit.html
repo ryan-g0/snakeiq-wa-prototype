@@ -177,7 +177,7 @@
         <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
           <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
             <div style="display:flex; flex-direction:column; gap:7px;">
-              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 39 &middot; OFFLINE</div>
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 40 &middot; OFFLINE</div>
               <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
               <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
             </div>
@@ -552,8 +552,12 @@ class Component extends DCLogic {
 
   // Two buttons, not one: iOS suppresses a second programmatic download that is not
   // tied to its own tap, so a chained labels file dies silently.
-  exportLog(){ this.save("snakeiq_" + this.state.sessionId + ".tsv", this.logTsv(), "text/tab-separated-values"); }
-  exportLabels(){ this.save("snakeiq_" + this.state.sessionId + "_labels.txt", this.logLabels(), "text/plain"); }
+  // octet-stream, deliberately. With a text-ish MIME type iOS PREVIEWS the file instead of
+  // downloading it — the researcher sees the contents, closes the view, and nothing was
+  // ever saved. An opaque type forces Safari's download path, so the file lands in
+  // Files → Downloads and survives the session.
+  exportLog(){ this.save("snakeiq_" + this.state.sessionId + ".tsv", this.logTsv(), "application/octet-stream"); }
+  exportLabels(){ this.save("snakeiq_" + this.state.sessionId + "_labels.txt", this.logLabels(), "application/octet-stream"); }
 
   // ---- Part boundary -------------------------------------------------------------
   // One session, one t0, one clock across both parts: the interview sits INSIDE the log
@@ -2168,7 +2172,7 @@ class Component extends DCLogic {
                 font:"600 16px/1.2 Barlow,sans-serif", letterSpacing:".03em", cursor:"pointer", boxShadow:"0 2px 8px rgba(0,0,0,.18)" } },
               "END & SAVE FILE"),
             h("div",{ style:{ fontFamily:"'Roboto Mono',monospace", fontSize:10, letterSpacing:".05em", color:"#6b7a82", textAlign:"center" } },
-              "TSV downloads on tap · LABELS from the bar below")));
+              "Saves to Files \u203a Downloads \u00b7 LABELS from the bar below")));
     }
     return {
       thread,
