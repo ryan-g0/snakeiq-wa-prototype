@@ -101,9 +101,16 @@
     "Share your location to find a snake catcher near you.": "Deel jou ligging om 'n slangvanger naby jou te vind.",
 
     // ---- time of bite ----
-    "*What time were you bitten?*\nYou started this chat at ": "*Hoe laat is jy gebyt?*\nJy het hierdie klets begin om ",
-    "\n\nJust type and send the time.": "\n\nTik net die tyd en stuur.",
-    "Type a time, e.g. 14:15\u2026": "Tik 'n tyd, bv. 14:15\u2026",
+    "*When were you bitten?*\nYou started this chat at ": "*Wanneer is jy gebyt?*\nJy het hierdie klets begin om ",
+    "\n\nChoose the closest option.": "\n\nKies die naaste opsie.",
+    "Choose a time": "Kies 'n tyd",
+    "Less than 5 min ago": "Minder as 5 min gelede",
+    "5\u201315 minutes ago": "5\u201315 minute gelede",
+    "15\u201360 minutes ago": "15\u201360 minute gelede",
+    "1\u20136 hours ago": "1\u20136 uur gelede",
+    "More than 6 hours ago": "Meer as 6 uur gelede",
+    "Around ": "Ongeveer ",
+    "Before ": "Voor ",
 
     // ---- spit in eye ----
     "Rinse the eye now \u2014 don\u2019t wait.\n\n\u2022 Flush with clean water or saline for 15\u201320 minutes.\n\u2022 Hold the eyelid open; roll the eye around.\n\u2022 Remove contact lenses if present.\n\u2022 Do not rub the eye.\n\nWas anyone also bitten?":
