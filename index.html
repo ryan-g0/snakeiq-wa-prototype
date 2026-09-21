@@ -31,15 +31,19 @@
   footer { margin-top:22px; font-family:'Roboto Mono',monospace; font-size:11px; line-height:1.7; color:#6b7a82; }
 </style>
 <script>
-/* Offline field use: the page caches itself on first load over the network, then runs with
-   no signal at all — still on https, so geolocation and camera stay available (a file://
-   copy loses both). The manifest and apple meta are added at runtime so the offline
-   bundler leaves their URLs alone. */
+/* The old field build registered a service worker that cached every page. It is the reason
+   a pushed update kept serving the previous prototype, so this page now actively tears it
+   down: unregister the worker, drop its caches, and reload once so the review links are
+   always the files that are actually in the repo. */
 (function(){
-  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
-  [["apple-mobile-web-app-capable","yes"],["apple-mobile-web-app-status-bar-style","black-translucent"],["theme-color","#11344F"]]
-    .forEach(function(p){ var m = document.createElement("meta"); m.name = p[0]; m.content = p[1]; document.head.appendChild(m); });
-  if ("serviceWorker" in navigator) window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(rs){
+    if (!rs.length) return;
+    Promise.all(rs.map(function(r){ return r.unregister(); }))
+      .then(function(){ return caches.keys(); })
+      .then(function(ks){ return Promise.all(ks.map(function(k){ return caches.delete(k); })); })
+      .then(function(){ location.reload(); });
+  });
 })();
 </script>
 </head>
@@ -47,75 +51,32 @@
 <main>
   <div class="eyebrow">LACHESIS FOUNDATION &middot; SNAKEIQ</div>
   <h1>WhatsApp emergency bot &mdash; review</h1>
-  <p class="lede">The interactive prototype of the snakebite bot, plus the flow specification behind it. Everything runs in the browser; nothing is sent anywhere.</p>
+  <p class="lede">Two builds of the snakebite bot: the current one and the one before it, for comparison. Everything runs in the browser; nothing is sent anywhere.</p>
   <div class="cards">
-    <a class="card" href="bot-c.html">
-      <span class="tag">BOT &middot; C</span>
+    <a class="card" href="bot-d.html">
+      <span class="tag">BOT &middot; D</span>
       <span>
-        <h2>Interactive prototype &mdash; Western Cape</h2>
-        <p>The current build. Same flow, localised to the Overberg: Swellendam Provincial and Otto du Plessis hospitals, local antivenom stock and place names, and the victim / bystander split in the symptom check.</p>
+        <h2>Interactive prototype &mdash; current</h2>
+        <p>Western Cape flow with the standing Menu, the paced first-aid sequence, sharing consent before the hospital hand-off, and the description key restored to the bite path. Tap the WhatsApp components to walk it; the right pane shows the Twilio content template emitted for each turn.</p>
       </span>
     </a>
-    <a class="card" href="bot-c-testkit.html">
-      <span class="tag">TESTKIT &middot; C</span>
+    <a class="card alt" href="bot-c.html">
+      <span class="tag alt">BOT &middot; C</span>
       <span>
-        <h2>Field-test build &mdash; Western Cape</h2>
-        <p>The Western Cape flow on the field-test harness: participant ID, timestamped session log with CSV and Audacity label export, real camera and GPS, and the part&nbsp;1 / part&nbsp;2 break at &ldquo;Open in Google Maps&rdquo;.</p>
-      </span>
-    </a>
-    <a class="card" href="bot-b.html">
-      <span class="tag">BOT</span>
-      <span>
-        <h2>Interactive prototype &mdash; Mpumalanga (previous)</h2>
-        <p>Tap the WhatsApp components to walk the flow. The right pane shows the Twilio content template emitted for each turn, with its channel limits checked.</p>
-      </span>
-    </a>
-    <a class="card" href="bot-b-testkit.html">
-      <span class="tag">TESTKIT</span>
-      <span>
-        <h2>Field-test build &mdash; Mpumalanga (previous)</h2>
-        <p>Same flow, wired to the handset: &ldquo;Take a photo&rdquo; opens the real camera and the picture comes back into the thread, &ldquo;Send current location&rdquo; uses real GPS, and hospital distances are computed from where you actually are. Open it on a phone &mdash; it fills the screen and hides the inspector.</p>
-      </span>
-    </a>
-    <a class="card" href="flow-spec.html">
-      <span class="tag doc">SPEC</span>
-      <span>
-        <h2>Conversation flow specification</h2>
-        <p>Every turn, its content type, the module seams, channel constraints and the open review items. Revised for First aid 1, the composer-photo entry and the retired variant. Print or save as PDF from your browser.</p>
+        <h2>Interactive prototype &mdash; previous</h2>
+        <p>The build D was made from: same region and hospitals, before the Menu, the consent turn and the reworked cancellation paths.</p>
       </span>
     </a>
   </div>
   <div class="look">
-    <h3>Changed today &middot; 29 August 2026</h3>
+    <h3>Changed in D &middot; 21 September 2026</h3>
     <ul>
-      <li><b>Western Cape build (C)</b> added, in both review and field-test form. Location anchor is Swellendam; hospitals are Swellendam Provincial (18 Drostdy Street) and Otto du Plessis in Bredasdorp, both government facilities, with Mediclinic Worcester for eye care.</li>
-      <li>The symptom check now opens with <b>&ldquo;Are you the victim?&rdquo;</b> &mdash; the answer decides whether the checklist asks what you <i>feel</i> or what you <i>see</i>, and sets the wording of every later question.</li>
-      <li>First aid 1 is titled <b>To Do:</b> and no longer tells anyone not to wait for an identification; the ID prompt now leads with &ldquo;#1 priority is to get to the hospital, but if you can ID the snake, it will help your treatment.&rdquo;</li>
-      <li>The swelling check carries an <b>illustration</b> of the marked limb, between the title and the instruction.</li>
-    </ul>
-    <h3 style="margin-top:16px;">Changed 2 August 2026</h3>
-    <ul>
-      <li><b>Testkit build added</b> for field testing: real camera capture, real GPS, distances computed from the live fix, working Google Maps directions links, and a full-screen phone layout with the inspector hidden. The design-review build is unchanged.</li>
-      <li>Region moved from Eswatini to the <b>Mpumalanga lowveld, South Africa</b>: Mbombela as the shared location, Rob Ferreira and Themba hospitals, Mediclinic Nelspruit for eye care, SA dialling codes and local place names in the picker. The module&rsquo;s clinical fields still cite the Eswatini 2021 guidelines &mdash; that citation needs a South African replacement before the pilot.</li>
-      <li>&ldquo;Pick a different spot&rdquo; now opens WhatsApp&rsquo;s own location picker &mdash; map with a draggable pin, search, and nearby places. The bot cannot render a pannable map inside a message, so the sheet is the client&rsquo;s; either route returns one inbound location message.</li>
-      <li>The <b>no photo &rarr; hospital</b> variant is consolidated into the main prototype and retired. Its hospital instruction and keep-still first aid are now <b>First aid 1</b>: the turn that fires the moment a bite is reported, before any identification, because treatment does not wait for a species.</li>
-      <li>First aid 1 is CMS content keyed by species &mdash; an unidentified bite takes the generic entry, an identified one takes its species entry. A species with no First aid 1 content produces <b>no turn at all</b>; the flow continues straight to care rather than showing filler. (Southern African Python is wired that way in the prototype.)</li>
-      <li>New entry point: attaching a photo from the <b>+</b> button starts the flow cold. The bot confirms it is a snake, asks for location while it analyses, and identifies the species &mdash; then asks what happened: someone bitten, spat in the eye, or just more about the snake. A bite routes straight into first aid and the antivenom list for that species.</li>
-    </ul>
-    <h3 style="margin-top:16px;">Changed 1 August 2026</h3>
-    <ul>
-      <li>Added the <b>no photo &rarr; hospital</b> variant, for comparison against the main prototype.</li>
-      <li>On the ID-a-snake path, the third option is now &ldquo;ID by description&rdquo; leading straight into the adaptive key. The bite path still defers, because that slot has to carry the antivenom escape.</li>
-      <li>Redrew the hood question&rsquo;s two illustrations from different viewpoints, so the lifted snake no longer reads as hooded.</li>
-    </ul>
-    <h3 style="margin-top:16px;">Changed 31 July 2026</h3>
-    <ul>
-      <li>The photo request now comes first. Location is asked once, while the image is being analysed, and never asked again.</li>
-      <li>The ID prompt is three options: take a photo, use an existing photo, or no photo &mdash; the snake is gone.</li>
-      <li>A non-venomous identification with a reported bite now runs a symptom screen. Any sign of envenoming overrides the identification and routes to a hospital; none routes to wound care.</li>
-      <li>Venom status is stated plainly &mdash; &ldquo;Venomous.&rdquo;, not &ldquo;Likely venomous.&rdquo; Doubt belongs to the identification, so it sits on the ID line and the match confidence.</li>
-      <li>Photo-match confidences reworked as one distribution (86 / 9 / 3 / 2%) rather than four separate scores.</li>
-      <li>Version A, the triage-first variant, has been dropped. The spec now covers this flow only.</li>
+      <li>A standing <b>Menu</b>, reachable from any card or by typing &ldquo;menu&rdquo;. Before arrival it offers transport, first aid, the bite record and an ID; after check-in it switches to the review set. &ldquo;Bite information&rdquo; is addressable by name the same way.</li>
+      <li>The bite path is <b>paced</b>: time of bite is asked first, then first aid, then &ldquo;Plan ahead&rdquo;, each waiting for an acknowledgement instead of stacking three cards at once. Hospital selection is one card.</li>
+      <li><b>Consent before the hand-off</b> &mdash; nothing is sent to a hospital until the user says yes, and a refusal is honoured in every later claim the bot makes.</li>
+      <li>No antivenom product is named anywhere: which one to give is a decision made at the facility.</li>
+      <li>Cancelling splits in two &mdash; calling off the trip keeps the case open, &ldquo;there was no bite&rdquo; closes it &mdash; and neither ends in a dead end.</li>
+      <li>&ldquo;ID by description&rdquo; is offered on the bite path again, and always returns at least three species to choose between.</li>
     </ul>
   </div>
   <footer>Best viewed on a desktop browser &middot; draft for review, not clinically signed off</footer>

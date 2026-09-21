@@ -1,0 +1,7 @@
+/* Trimmed font loader for the field build.
+   The design system's tokens/fonts.css imports six families at every weight (including
+   Oswald and Spectral, which are website faces this bot never renders). Inlining all of
+   them made the offline bundle ~7 MB, which is what kept failing to upload. This loads
+   only the faces the bot actually uses, latin subset, so the bundle stays small enough
+   to ship and the phone still has every glyph offline. */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600&family=Inter:wght@400;600&family=Roboto+Mono:wght@700&display=swap&subset=latin');

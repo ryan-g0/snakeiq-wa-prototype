@@ -3,12 +3,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ext-resource-dependency" content="assets/snake-photo-wide.jpg" data-resource-id="snakePhoto" />
+<meta name="ext-resource-dependency" content="assets/species/mamba_black.jpg" data-resource-id="sp_mambaBlack" />
+<meta name="ext-resource-dependency" content="assets/species/cobra_mozam.jpg" data-resource-id="sp_cobraMozam" />
+<meta name="ext-resource-dependency" content="assets/species/grass_olive.jpg" data-resource-id="sp_grassOlive" />
+<meta name="ext-resource-dependency" content="assets/species/mole.jpg" data-resource-id="sp_mole" />
+<meta name="ext-resource-dependency" content="assets/species/tiger_eastern.jpg" data-resource-id="sp_tigerEastern" />
+<meta name="ext-resource-dependency" content="assets/maps/swellendam.png" data-resource-id="mapSwellendam" />
+<meta name="ext-resource-dependency" content="assets/swelling-mark-illustration.png" data-resource-id="swellingMark" />
+<script>
+/* Home Screen + offline field use. The page is served over https, so GPS and camera keep
+   working with no signal; a file:// copy loses both. Pages come from the network whenever
+   there IS signal (see sw.js), so an upload is never shadowed by a cached build. */
+(function(){
+  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
+  [["apple-mobile-web-app-capable","yes"],["apple-mobile-web-app-status-bar-style","black-translucent"],["theme-color","#11344F"]]
+    .forEach(function(p){ var m = document.createElement("meta"); m.name = p[0]; m.content = p[1]; document.head.appendChild(m); });
+  if ("serviceWorker" in navigator) window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").then(function(reg){
+      // Ask the server on every load; the new copy is picked up on the NEXT load, never by
+      // reloading mid-session (that read as dead buttons — a tap answered by a restart).
+      reg.update().catch(function(){});
+    }).catch(function(){});
+  });
+})();
+</script>
 <script src="./support.js"></script>
 </head>
+
 <body>
 <x-dc>
 <helmet>
-  <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/tokens/fonts.css">
+  <link rel="stylesheet" href="fonts-testkit.css">
   <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/tokens/fig-tokens.css">
   <link rel="stylesheet" href="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/styles.css">
   <script src="_ds/lachesis-foundation-snakeiq-design-syste-20ad5262-3ccc-4fb8-91f7-5bb02dbd896c/_ds_bundle.js"></script>
@@ -24,20 +50,174 @@
     .ins-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
     .wa-btn:active { background: #f2efe8 !important; }
     .wa-row:active { background: rgba(0,0,0,.04) !important; }
+    /* Taps, not gestures: no double-tap-zoom delay, and every chat control clears the
+       44px minimum target even where the label is short. */
+    .wa-btn, .wa-row, button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    @media (max-width: 900px) { .wa-btn, .wa-row { min-height: 44px !important; } }
     #wa-input:focus { outline: none; }
     input::placeholder { color: #8696a0; }
+    /* Field-test layout: on a real handset the prototype fills the screen and the
+       inspector, bezel and simulated status bar get out of the way. */
+    @media (max-width: 900px) {
+      /* The handset owns the viewport: nothing scrolls the page, so Safari cannot push the
+         top of the chat off screen. The frame is taken out of flow entirely rather than
+         sized in vh \u2014 100vh lies about the visible area while the toolbars are showing. */
+      /* Body itself is taken out of flow: iOS cannot rubber-band or pan a fixed root, so
+         the frame stops drifting when the toolbars collapse. */
+      html, body { margin: 0 !important; height: 100% !important; overflow: hidden !important; overscroll-behavior: none !important; position: fixed !important; inset: 0 !important; width: 100% !important; touch-action: pan-y; -webkit-text-size-adjust: 100%; }
+      #tk-wrap { display: block !important; width: 100% !important; min-height: 0 !important; height: 100% !important; padding: 0 !important; }
+      #tk-phone { width: 100% !important; gap: 0 !important; }
+      /* Frame background matches the session strip, so any band the browser's own toolbar
+         leaves behind reads as part of the UI instead of a black bezel. */
+      /* Pinned to the VISUAL viewport (set by script below), not the layout viewport —
+         the layout viewport is what shifts under Safari's collapsing toolbars. */
+      #tk-frame { position: fixed !important; left: 0 !important; right: 0 !important; top: var(--tk-top, 0px) !important; bottom: auto !important; height: var(--tk-h, 100dvh) !important; width: auto !important; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; background: #11344F !important; }
+      /* Safe areas: the notch pads the top, the home indicator the bottom, so no control
+         sits under either and no dead band is left below the session strip. */
+      /* The status-bar band is a flex SPACER, not padding: padding shrank the content box
+         and left a strip of the screen's own beige showing below the composer. */
+      #tk-screen { border-radius: 0 !important; box-sizing: border-box !important; height: 100% !important; min-height: 100% !important; padding-top: 0 !important; background: #f6f6f6 !important; }
+      #tk-screen::before { content: "" !important; display: block !important; flex: none !important; height: max(env(safe-area-inset-top), var(--tk-minsafe, 0px)) !important; background: #f6f6f6 !important; }
+      #tk-strip { padding-bottom: calc(9px + env(safe-area-inset-bottom)) !important; }
+      #tk-composer { padding-bottom: calc(9px + env(safe-area-inset-bottom)) !important; }
+      #tk-strip ~ #tk-composer, #tk-composer:has(~ #tk-strip) { padding-bottom: 9px !important; }
+      #tk-notch, #tk-status, #tk-caption, #tk-ins { display: none !important; }
+    }
   </style>
+  <script>
+  (function(){
+    // 1. No pinch/double-tap zoom: a zoomed-in visual viewport is the other way the
+    //    prototype "slides around" under the thumb during a field test.
+    var mv = document.querySelector('meta[name="viewport"]');
+    if (mv) mv.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+    document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, { passive:false });
+
+    // 2. Track the visual viewport so the frame is exactly as tall as what is really
+    //    visible, and sits exactly where it really starts.
+    var vv = window.visualViewport;
+    function sync(){
+      var h = vv ? vv.height : window.innerHeight;
+      var t = vv ? vv.offsetTop : 0;
+      var r = document.documentElement.style;
+      r.setProperty('--tk-h', h + 'px');
+      r.setProperty('--tk-top', t + 'px');
+    }
+    // 2b. Status-bar band. env(safe-area-inset-top) reports 0 in some full-screen web
+    //    contexts, which lets the clock/battery row paint straight on top of the chat
+    //    header. CSS takes the larger of the real inset and this floor, so when the page
+    //    genuinely owns the top of the screen the header still starts below the status
+    //    bar, the way a real WhatsApp thread does.
+    function minSafeTop(){
+      var owns_top = window.navigator.standalone === true ||
+                    window.matchMedia('(display-mode: standalone)').matches ||
+                    window.matchMedia('(display-mode: fullscreen)').matches ||
+                    (window.screen && window.innerHeight >= window.screen.height - 24);
+      if (!owns_top) return 0;
+      var notched = window.screen && Math.max(window.screen.width, window.screen.height) >= 812;
+      return notched ? 47 : 20;
+    }
+
+    var _sync = sync;
+    sync = function(){
+      _sync();
+      document.documentElement.style.setProperty('--tk-minsafe', minSafeTop() + 'px');
+    };
+
+    if (vv){ vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); }
+    window.addEventListener('orientationchange', function(){ setTimeout(sync, 250); });
+    sync();
+
+    // 3. Any drag that is not inside a scrollable list is swallowed, so the page
+    //    never rubber-bands behind the frame. A tap is never a drag: finger jitter under
+    //    ~10px is left alone, because cancelling those touchmoves is what stopped iOS
+    //    from synthesising the click on reply buttons.
+    // Every control a finger is meant to hit — the chat's reply buttons and list rows are
+    // divs, the testkit's own controls are real buttons.
+    var TAPPABLE = '.wa-btn, .wa-row, button, [role="button"], label[for]';
+
+    var t_start = null;
+    document.addEventListener('touchstart', function(e){
+      var t = e.touches[0];
+      t_start = t ? { x:t.clientX, y:t.clientY, el:e.target, t:Date.now() } : null;
+    }, { passive:true });
+
+    document.addEventListener('touchmove', function(e){
+      if (window.innerWidth > 900) return;
+      var t = e.touches[0];
+      if (t_start && t && Math.abs(t.clientX - t_start.x) < 10 && Math.abs(t.clientY - t_start.y) < 10) return;
+      // A drag that began on a control is the finger settling, not a scroll: leave it be,
+      // or cancelling it takes the click with it.
+      if (t_start && t_start.el && t_start.el.closest && t_start.el.closest(TAPPABLE)) return;
+      var n = e.target;
+      while (n && n !== document.body){
+        if (n.scrollHeight > n.clientHeight + 1){
+          var s = getComputedStyle(n).overflowY;
+          if (s === 'auto' || s === 'scroll') return;
+        }
+        n = n.parentNode;
+      }
+      if (e.cancelable) e.preventDefault();
+    }, { passive:false });
+
+    // No synthetic-click fallback. There was one here; once the touchmove guard above
+    //    stopped cancelling taps, iOS synthesised the click on its own and the fallback
+    //    fired a second one — every reply landed twice.
+  })();
+  </script>
 </helmet>
-<div style="display:flex; gap:0; width:1200px; min-height:860px; background:linear-gradient(160deg,#12303f,#0a1c27); padding:26px; align-items:stretch; font-family:Inter,system-ui,sans-serif;">
+<div id="tk-wrap" style="display:flex; gap:0; width:1200px; min-height:860px; background:linear-gradient(160deg,#12303f,#0a1c27); padding:26px; align-items:stretch; font-family:Inter,system-ui,sans-serif;">
 
   <!-- ============ PHONE ============ -->
-  <div style="flex:none; width:400px; display:flex; flex-direction:column; align-items:center; gap:14px;">
-    <div style="width:392px; height:800px; background:#0b0d0e; border-radius:46px; padding:11px; box-shadow:0 30px 60px rgba(0,0,0,.45), inset 0 0 0 2px #2a2d2f;">
-      <div style="position:relative; width:100%; height:100%; background:#ebe3d8; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+  <div id="tk-phone" style="flex:none; width:400px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+    <div id="tk-frame" style="width:392px; height:800px; background:#0b0d0e; border-radius:46px; padding:11px; box-shadow:0 30px 60px rgba(0,0,0,.45), inset 0 0 0 2px #2a2d2f;">
+      <div id="tk-screen" style="position:relative; width:100%; height:100%; background:#ebe3d8; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+        <!-- Start-session screen: field-test scaffolding, not part of the bot. Nothing is
+             logged until Start, so a stray tap while setting the phone up does not land in
+             the data. Sits above the whole screen, including the notch. -->
+        <sc-if value="{{ sessionPending }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute; inset:0; z-index:60; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:calc(34px + max(env(safe-area-inset-top), var(--tk-minsafe, 0px))) 28px calc(34px + env(safe-area-inset-bottom)); overflow-y:auto;">
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">SNAKEIQ TESTKIT &middot; BUILD 41 &middot; OFFLINE</div>
+              <div style="font:600 27px/1.15 Barlow,sans-serif; color:#EEE9E0;">Field session</div>
+              <div style="font:400 13.5px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Enter the participant ID, then start. Every turn is timestamped from the moment you tap Start, so start it before the participant takes the phone.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <label for="tk-pid" style="font:600 11px/1.4 'Barlow Condensed',Inter,sans-serif; letter-spacing:.1em; color:rgba(238,233,224,.6);">PARTICIPANT ID</label>
+              <input id="tk-pid" value="{{ pid }}" onInput="{{ onPid }}" onKeyDown="{{ onPidKey }}" placeholder="P-03" autocapitalize="characters" autocomplete="off" style="width:100%; box-sizing:border-box; border:1px solid rgba(238,233,224,.28); background:rgba(0,0,0,.22); border-radius:8px; padding:15px 14px; font:600 19px/1.2 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0;">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <span style="font:600 11px/1.4 'Barlow Condensed',Inter,sans-serif; letter-spacing:.1em; color:rgba(238,233,224,.6);">LANGUAGE</span>
+              <div style="display:flex; gap:8px;">
+                <button onClick="{{ onLangEn }}" style="flex:1; min-height:46px; border:1px solid {{ langEnBd }}; border-radius:8px; background:{{ langEnBg }}; color:{{ langEnFg }}; font:600 15px/1.2 Barlow,sans-serif; cursor:pointer;">English</button>
+                <button onClick="{{ onLangAf }}" style="flex:1; min-height:46px; border:1px solid {{ langAfBd }}; border-radius:8px; background:{{ langAfBg }}; color:{{ langAfFg }}; font:600 15px/1.2 Barlow,sans-serif; cursor:pointer;">Afrikaans</button>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:flex-start; gap:10px; border:1px solid rgba(233,164,143,.4); border-radius:8px; background:rgba(201,75,48,.14); padding:10px 12px;">
+                <span style="flex:none; font:700 9.5px/1.5 'Roboto Mono',monospace; letter-spacing:.08em; color:#E9A48F;">1</span>
+                <div style="flex:1; font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.82);">Volume up, silent mode off. Start plays a two-tone beep that anchors this log to your audio recording &mdash; on silent, there is no anchor.</div>
+                <button onClick="{{ onTestTone }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 11px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">TEST</button>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:10px; padding:0 12px;">
+                <span style="flex:none; font:700 9.5px/1.5 'Roboto Mono',monospace; letter-spacing:.08em; color:rgba(238,233,224,.45);">2</span>
+                <div style="flex:1; font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.6);">Start the audio recorder, then tap Start, then hand over the phone.</div>
+              </div>
+              <div style="display:flex; align-items:flex-start; gap:10px; padding:0 12px;">
+                <span style="flex:none; font:700 9.5px/1.5 'Roboto Mono',monospace; letter-spacing:.08em; color:rgba(238,233,224,.45);">3</span>
+                <div style="flex:1; font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.6);">Two parts, one recording. Part 1 ends when the participant opens Maps &mdash; the transport interview happens with the audio still running, then you start the symptom check. Hold the bar at the bottom to reach the controls.</div>
+              </div>
+              <button onClick="{{ onStartSession }}" style="width:100%; min-height:54px; border:none; border-radius:8px; background:#C94B30; font:600 17px/1.2 Barlow,sans-serif; letter-spacing:.01em; color:#fff; cursor:pointer;" style-active="background:#A83C24">Start session &middot; beep</button>
+              <sc-if value="{{ canResume }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ onResume }}" style="width:100%; min-height:48px; border:1px solid rgba(238,233,224,.34); border-radius:8px; background:transparent; font:600 14px/1.3 Barlow,sans-serif; color:#EEE9E0; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">{{ resumeLabel }}</button>
+              </sc-if>
+              <div style="font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.5);">{{ sessionFootnote }}</div>
+            </div>
+          </div>
+        </sc-if>
         <!-- notch -->
-        <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:132px; height:26px; background:#0b0d0e; border-radius:0 0 16px 16px; z-index:20;"></div>
+        <div id="tk-notch" style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:132px; height:26px; background:#0b0d0e; border-radius:0 0 16px 16px; z-index:20;"></div>
         <!-- iOS status bar -->
-        <div style="flex:none; position:relative; height:44px; background:#f6f6f6; display:flex; align-items:flex-end; justify-content:space-between; padding:0 24px 4px; z-index:12;">
+        <div id="tk-status" style="flex:none; position:relative; height:44px; background:#f6f6f6; display:flex; align-items:flex-end; justify-content:space-between; padding:0 24px 4px; z-index:12;">
           <span style="font-family:-apple-system,'SF Pro Text',Inter,sans-serif; font-weight:600; font-size:14.5px; color:#000; letter-spacing:.01em;">14:34</span>
           <div style="display:flex; align-items:center; gap:6px;">
             <svg width="18" height="12" viewBox="0 0 18 12" fill="#000"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
@@ -70,7 +250,7 @@
           {{ thread }}
         </div>
         <!-- input bar -->
-        <div style="flex:none; background:#f6f6f6; border-top:1px solid rgba(0,0,0,.08); padding:7px 8px 9px; display:flex; align-items:center; gap:8px;">
+        <div id="tk-composer" style="flex:none; background:#f6f6f6; border-top:1px solid rgba(0,0,0,.08); padding:7px 8px 9px; display:flex; align-items:center; gap:8px;">
           <div onClick="{{ onPlus }}" title="Attach a photo" style="flex:none; display:flex; align-items:center; cursor:pointer;" style-active="opacity:0.55">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="#008069"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
           </div>
@@ -89,6 +269,48 @@
              the library/camera chooser. Both hand a File straight back to the flow. -->
         <input type="file" accept="image/*" capture="environment" ref="{{ camRef }}" onChange="{{ onFilePicked }}" style="display:none;">
         <input type="file" accept="image/*" ref="{{ libRef }}" onChange="{{ onFilePicked }}" style="display:none;">
+        <!-- Recording strip: the only persistent reminder that a session is live, and the
+             one place the log can be pulled off the phone. Sits under the composer as a
+             flex row rather than floating over it. -->
+        <sc-if value="{{ stripClosed }}" hint-placeholder-val="{{ false }}">
+          <div id="tk-strip-shut" onPointerDown="{{ onStripHold }}" onPointerUp="{{ onStripRelease }}" onPointerLeave="{{ onStripRelease }}" style="flex:none; display:flex; align-items:center; gap:9px; background:#11344F; padding:6px 12px 8px; cursor:pointer; user-select:none; -webkit-user-select:none;">
+            <span style="flex:none; width:7px; height:7px; border-radius:50%; background:{{ logDot }};"></span>
+            <span style="flex:1; min-width:0; font:600 10.5px/1.4 'Roboto Mono',monospace; letter-spacing:.04em; color:rgba(238,233,224,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ logStatus }}</span>
+            <span style="flex:none; font:600 9px/1.4 'Roboto Mono',monospace; letter-spacing:.1em; color:rgba(238,233,224,.34);">HOLD</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ stripOpen }}" hint-placeholder-val="{{ false }}">
+          <div id="tk-strip" style="flex:none; display:flex; align-items:center; gap:7px; background:#11344F; padding:7px 12px 9px;">
+            <span style="flex:none; width:8px; height:8px; border-radius:50%; background:{{ logDot }};"></span>
+            <span onClick="{{ onStripClose }}" title="Hide the controls" style="flex:1; min-width:0; font:600 11px/1.4 'Roboto Mono',monospace; letter-spacing:.04em; color:rgba(238,233,224,.82); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;">{{ logStatus }} &nbsp;&times;</span>
+            <button onClick="{{ onExportLog }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">TSV</button>
+            <button onClick="{{ onExportLabels }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">TABBED</button>
+            <button onClick="{{ onSessionAction }}" style="flex:none; min-height:44px; border:1px solid rgba(238,233,224,.34); border-radius:6px; background:transparent; font:600 11px/1 'Roboto Mono',monospace; letter-spacing:.06em; color:#EEE9E0; padding:0 10px; cursor:pointer;" style-active="background:rgba(255,255,255,.12)">{{ sessionActionLabel }}</button>
+          </div>
+        </sc-if>
+        <!-- Researcher-facing interval between the two parts. The clock keeps running and
+             the log keeps the gap, so the transport interview is inside the same timeline. -->
+        <sc-if value="{{ interstitial }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:55; background:#11344F; display:flex; flex-direction:column; justify-content:center; gap:22px; padding:34px 26px calc(30px + env(safe-area-inset-bottom)); overflow-y:auto;">
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="font:700 10px/1.4 'Roboto Mono',monospace; letter-spacing:.14em; color:#E9A48F;">PART 1 COMPLETE &middot; RECORDING</div>
+              <div style="font:600 25px/1.16 Barlow,sans-serif; color:#EEE9E0;">Transport interview</div>
+              <div style="font:400 13px/1.55 Inter,sans-serif; color:rgba(238,233,224,.72);">Leave the audio running. The clock and the log are still live, so this whole interval lands in the same timeline.</div>
+              <div style="font:400 12px/1.5 Inter,sans-serif; color:rgba(233,164,143,.9);">Maps was not opened on purpose &mdash; leaving Safari ends the session on iOS. Open it on your own phone if you want to watch that step.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:1px; border-radius:8px; overflow:hidden; border:1px solid rgba(238,233,224,.16);">
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">1</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">Show me what you would do next.</span></div>
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">2</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">Who would you contact?</span></div>
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">3</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">Where would you go?</span></div>
+              <div style="display:flex; gap:10px; background:rgba(0,0,0,.18); padding:11px 13px;"><span style="flex:none; font:700 9.5px/1.6 'Roboto Mono',monospace; color:#E9A48F;">4</span><span style="flex:1; font:400 12.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.86);">How would you arrange transport?</span></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="font:600 12px/1.4 'Roboto Mono',monospace; letter-spacing:.06em; color:rgba(238,233,224,.55);">ELAPSED {{ interviewClock }}</div>
+              <button onClick="{{ onBeginPart2 }}" style="width:100%; min-height:54px; border:none; border-radius:8px; background:#C94B30; font:600 17px/1.2 Barlow,sans-serif; color:#fff; cursor:pointer;" style-active="background:#A83C24">Begin symptom check &middot; beep</button>
+              <div style="font:400 11.5px/1.5 Inter,sans-serif; color:rgba(238,233,224,.5);">Three ascending tones mark part 2 in the recording. Hand the phone back after the beep.</div>
+            </div>
+          </div>
+        </sc-if>
         <!-- WhatsApp's own location picker: opened by the client, not a Twilio template -->
         <sc-if value="{{ locSheetOpen }}" hint-placeholder-val="{{ false }}">
           <div style="position:absolute; inset:0; z-index:30; background:rgba(0,0,0,.4); display:flex; align-items:flex-end;">
@@ -150,26 +372,18 @@
         </sc-if>
       </div>
     </div>
-    
-    <div style="display:flex; align-items:center; gap:8px;">
-      <span style="font-family:'Roboto Mono',monospace; font-size:10px; letter-spacing:.11em; color:rgba(255,255,255,.42);">LANGUAGE</span>
-      <div style="display:flex; gap:6px;">
-        <button onClick="{{ onLangEn }}" style="min-height:32px; padding:0 14px; border:1px solid {{ langEnBd }}; border-radius:6px; background:{{ langEnBg }}; color:{{ langEnFg }}; font:600 12px/1 Barlow,sans-serif; letter-spacing:.02em; cursor:pointer;">English</button>
-        <button onClick="{{ onLangAf }}" style="min-height:32px; padding:0 14px; border:1px solid {{ langAfBd }}; border-radius:6px; background:{{ langAfBg }}; color:{{ langAfFg }}; font:600 12px/1 Barlow,sans-serif; letter-spacing:.02em; cursor:pointer;">Afrikaans</button>
-      </div>
-    </div>
-    <div style="font-family:'Roboto Mono',monospace; font-size:11px; color:rgba(255,255,255,.42); text-align:center; letter-spacing:.02em;">Interactive prototype &middot; tap the WhatsApp components</div>
+    <div id="tk-caption" style="font-family:'Roboto Mono',monospace; font-size:11px; color:rgba(255,255,255,.42); text-align:center; letter-spacing:.02em;">Testkit &middot; real camera, real GPS &middot; open on a phone to field test</div>
   </div>
 
   <!-- ============ INSPECTOR ============ -->
-  <div style="flex:1; min-width:0; margin-left:24px; display:flex; flex-direction:column; background:#0b1e2b; border-radius:16px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.06);">
+  <div id="tk-ins" style="flex:1; min-width:0; margin-left:24px; display:flex; flex-direction:column; background:#0b1e2b; border-radius:16px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.06);">
     <div style="flex:none; padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:14px;">
       <div style="flex:1;">
         <div style="display:flex; align-items:center; gap:9px;">
-          <span style="font-family:'Roboto Mono',monospace; font-size:11px; font-weight:600; letter-spacing:.08em; color:#8ff0e4; background:#1c5c58; border-radius:5px; padding:3px 8px;">VERSION C</span>
+          <span style="font-family:'Roboto Mono',monospace; font-size:11px; font-weight:600; letter-spacing:.08em; color:#f2d0c6; background:#7a2d1c; border-radius:5px; padding:3px 8px;">C &middot; TESTKIT</span>
           <span style="font-family:Barlow,sans-serif; font-weight:600; font-size:17px; color:#fff; letter-spacing:.01em;">Twilio Content Inspector</span>
         </div>
-        <div style="font-size:12px; color:#7f97a6; margin-top:4px;">Western Cape copy &middot; First aid 1 the moment a bite is known &middot; ID first &middot; location &rarr; antivenom</div>
+        <div style="font-size:12px; color:#7f97a6; margin-top:4px;">Built for prototype fidelity: the phone&rsquo;s own camera and GPS, real distances</div>
       </div>
       <button onClick="{{ resetFlow }}" style="flex:none; font-family:'Roboto Mono',monospace; font-size:12px; color:#e9ddd3; background:rgba(201,75,48,.16); border:1px solid rgba(201,75,48,.5); border-radius:7px; padding:8px 13px; cursor:pointer;">&#8635; Restart flow</button>
     </div>
@@ -180,16 +394,356 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:860}}">
+const __R = window.__resources || {};
+const SNAKE_PHOTO = __R.snakePhoto || "assets/snake-photo-wide.jpg";
+const MAP_IMG = __R.mapSwellendam || "assets/maps/swellendam.png";
+const SWELL_IMG = __R.swellingMark || "assets/swelling-mark-illustration.png";
 class Component extends DCLogic {
   constructor(props){
     super(props);
     this.state = { lang: "en", thread: [], turn: null, inputValue: "", intent: null, species: null, idMethod: null, severity: null, tmin: 34,
       isVictim: true, hospital: "Swellendam Provincial Hospital", hasNeuro: false, selectedSymptoms: [], checkSel: {}, hasLoc: false,
-      seamA: false, seamB: false, keyStep: 0, keyAnswers: [], biteTime: null, symId: null, symTime: null, swell: false, locSheet: null, meds: null, bitePhoto: false, checkedIn: false, photoUrl: null, snakeUrl: null, limbUrl: null };
+      seamA: false, seamB: false, keyStep: 0, keyAnswers: [], biteTime: null, symId: null, symTime: null, swell: false, locSheet: null, meds: null, bitePhoto: false, checkedIn: false,
+      photoUrl: null, snakeUrl: null, limbUrl: null, coords: null,
+      pid: "", sessionId: null, logCount: 0, sessionEnded: false };
     this.camRef = React.createRef();
     this.libRef = React.createRef();
   }
-  componentDidMount(){ this.enter("welcome", true); }
+
+  // ---------- session event log (testkit only) ----------
+  // Why this exists: field notes cannot be aligned to taps after the fact. Each row is
+  // (participant, elapsed ms, event, detail), so a screen or audio recording lines up
+  // against real per-turn timings. Held in localStorage under the session id, so a tab
+  // reload or a phone locking mid-run does not lose the session.
+  logKey(){ return "snakeiq_tk_log_" + this.state.sessionId; }
+
+  // Sync tone. The whole point of the log is timings, and timings are only useful next to
+  // what the participant said \u2014 so the session opens with an audible anchor the external
+  // recorder picks up. Find the tone in the waveform and elapsed_ms 0 is that instant; the
+  // closing tone gives a second anchor, so recorder drift can be stretched out rather than
+  // trusted. Two short high tones, deliberately unlike any WhatsApp notification sound.
+  // Scheduling into a SUSPENDED context is what put anchors in random places: iOS suspends
+  // audio when the page is backgrounded (the Maps hand-off does exactly that), the context
+  // clock stops, and the queued notes all fire whenever the user returns to Safari. So the
+  // context is confirmed running BEFORE anything is scheduled, and `then(ok)` fires at the
+  // real onset — the caller logs from there, so the logged timestamp is the sounding instant.
+  tone(kind, then){
+    const done = (ok)=>{ if (then) then(ok); };
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC){ done(false); return; }
+      this.ac = this.ac || new AC();
+      if (this.ac.state === "running") this.emitTone(kind, done);
+      else this.ac.resume().then(()=>this.emitTone(kind, done), ()=>done(false));
+    } catch(e){ done(false); }
+  }
+
+  emitTone(kind, done){
+    try {
+      if (this.ac.state !== "running"){ done(false); return; }
+      const t0 = this.ac.currentTime + 0.02;
+      const DUR = 0.26;   // long enough to survive a noisy room and to place by eye
+      // A phone speaker is small and the recorder is across the table, so the tone is
+      // pushed as loud as it can go without clipping: a limiter on the output, and each
+      // note stacked with its octave and fifth, which a small driver reproduces far
+      // better than a lone sine. Still unlike any WhatsApp notification sound.
+      const lim = this.ac.createDynamicsCompressor();
+      lim.threshold.value = -1; lim.knee.value = 0; lim.ratio.value = 20;
+      lim.attack.value = 0.001; lim.release.value = 0.05;
+      const out = this.ac.createGain();
+      out.gain.value = 1;
+      lim.connect(out); out.connect(this.ac.destination);
+      // Four distinguishable anchors across one long recording: ascending pair opens the
+      // session, DESCENDING pair closes part 1, three ascending opens part 2, three DESCENDING
+      // ends the test — the mirror of the part-2 opener, unmistakable at the tail of a recording.
+      // Four anchors also let drift be corrected piecewise instead of stretched end to end.
+      const G = DUR + 0.06;
+      const notes = kind === "end" ? [[2093,0],[1760,G],[1320,G*2]]
+        : kind === "part1end" ? [[1760,0],[1320,G]]
+        : kind === "part2start" ? [[1320,0],[1760,G],[2093,G*2]]
+        : [[1320,0],[1760,G]];
+      notes.forEach(([hz,off])=>{
+        const g = this.ac.createGain();
+        // hard-ish edges keep the onset sharp enough to place by eye in a waveform
+        g.gain.setValueAtTime(0.0001, t0+off);
+        g.gain.exponentialRampToValueAtTime(1, t0+off+0.006);
+        g.gain.setValueAtTime(1, t0+off+DUR-0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+off+DUR);
+        g.connect(lim);
+        [[1,1],[2,0.5],[3,0.28]].forEach(([mult,amp])=>{
+          const o = this.ac.createOscillator(), og = this.ac.createGain();
+          o.type = "sine"; o.frequency.value = hz*mult; og.gain.value = amp;
+          o.connect(og); og.connect(g);
+          o.start(t0+off); o.stop(t0+off+DUR+0.02);
+        });
+      });
+      setTimeout(()=>done(true), 20);
+    } catch(e){ done(false); }
+  }
+
+  elapsedLabel(){
+    if (!this.t0) return "0:00";
+    const s = Math.floor((Date.now() - this.t0)/1000);
+    return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+  }
+
+  startSession(){
+    const pid = (this.state.pid || "").trim().toUpperCase() || "ANON";
+    const sid = pid + "_" + new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
+    // Tone and t0 are set together: the anchor in the audio IS elapsed_ms 0.
+    this.log = [];
+    if (!this.visBound){
+      this.visBound = true;
+      // An anchor that could not sound is held until the page is in front again.
+      document.addEventListener("visibilitychange", ()=>this.fireAnchor());
+    }
+    this.tone("start", (ok)=>{
+      this.t0 = Date.now();
+      this.setState({ pid, sessionId: sid, sessionEnded: false, logCount: 0, toned: ok, phase: 1, interstitial: false, stripOpen: false }, ()=>{
+        this.logEvent("sync_tone", ok ? "start tone \u00b7 1320 Hz then 1760 Hz \u00b7 260 ms each \u00b7 anchor is the FIRST onset, 0 ms" : "SILENT \u2014 no anchor in the audio");
+        this.logEvent("session_start", navigator.userAgent.slice(0,120));
+        this.enter("welcome", true);
+      });
+    });
+  }
+
+  logEvent(event, detail, force){
+    if (!this.state.sessionId || (this.state.sessionEnded && !force)) return;
+    this.log = (this.log || []).concat([{ ms: Date.now() - this.t0, event, detail: detail || "" }]);
+    try {
+      localStorage.setItem(this.logKey(), JSON.stringify({ pid:this.state.pid, started:this.t0,
+        phase:this.state.phase || 1, sid:this.state.sessionId, rows:this.log }));
+      localStorage.setItem("snakeiq_tk_last", this.state.sessionId);
+    } catch(e){}
+    this.setState({ logCount: this.log.length });
+  }
+
+  // Tab-separated, not comma. Excel splits a .csv on the SYSTEM list separator, which on a
+  // South African locale is usually the semicolon — a double-click there drops the whole
+  // row into column A. Tabs split correctly in Excel, Sheets and pandas regardless of
+  // locale, and the label track was already tab-separated, so both exports now agree.
+  // No quoting: tabs and newlines are stripped from every field instead, which keeps the
+  // file trivially parseable by anything that splits on "\t".
+  logTsv(){
+    const cell = v => String(v).replace(/[\t\r\n]+/g, " ").trim();
+    const rows = (this.log || []).map((r,i)=>[i+1, this.state.pid, r.ms, (r.ms/1000).toFixed(2), r.event, r.detail].map(cell).join("\t"));
+    return ["# anchors: 0 ms = ascending pair (session start) · part1_end = descending pair · part2_start = three ascending · session_end = one tone",
+      ["seq","participant","elapsed_ms","elapsed_s","event","detail"].join("\t")].concat(rows).join("\n") + "\n";
+  }
+
+  // Audacity's label importer reads TAB-separated "start<TAB>end<TAB>text" and nothing else —
+  // a comma file with a header silently imports as an empty label track. Zero-length labels
+  // (start == end) are the right shape here: an event is an instant, not a region.
+  logLabels(){
+    return (this.log || []).map(r=>{
+      const t = (r.ms/1000).toFixed(3);
+      const text = (r.event + (r.detail ? " · " + r.detail : "")).replace(/[\t\r\n]+/g," ").slice(0,120);
+      return t + "\t" + t + "\t" + text;
+    }).join("\n") + "\n";
+  }
+
+  save(name, text, mime){
+    const blob = new Blob([text], { type:mime });
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }
+
+  // Two buttons, not one: iOS suppresses a second programmatic download that is not
+  // tied to its own tap, so a chained labels file dies silently.
+  // octet-stream, deliberately. With a text-ish MIME type iOS PREVIEWS the file instead of
+  // downloading it — the researcher sees the contents, closes the view, and nothing was
+  // ever saved. An opaque type forces Safari's download path, so the file lands in
+  // Files → Downloads and survives the session.
+  exportLog(){ this.save("snakeiq_" + this.state.sessionId + ".tsv", this.logTsv(), "application/octet-stream"); }
+  exportLabels(){ this.save("snakeiq_" + this.state.sessionId + "_labels.txt", this.logLabels(), "application/octet-stream"); }
+
+  // ---- Part boundary -------------------------------------------------------------
+  // One session, one t0, one clock across both parts: the interview sits INSIDE the log
+  // as a labelled interval, so a single label track covers the whole recording. Ending
+  // and restarting would give two t0s to reconcile against one audio file.
+  // Nothing backgrounds the page any more, so the anchor sounds straight away. The queue
+  // and the visibilitychange release stay as a safety net: if the phone is switched away
+  // for any reason, the anchor is held and fired when the page is in front again, and it
+  // is logged when it SOUNDS, which is what the waveform shows.
+  endPart1(){
+    this.logEvent("part1_end", "tapped Open in Google Maps — transport interview starts");
+    this.pendingAnchor = "part1end";
+    this.setState({ interstitial: true, stripOpen: false });
+    this.fireAnchor();
+  }
+
+  fireAnchor(){
+    if (!this.pendingAnchor || document.hidden) return;
+    const kind = this.pendingAnchor;
+    this.pendingAnchor = null;
+    const label = kind === "part1end"
+      ? "part 1 end · 1760 then 1320 Hz · descending pair"
+      : "part 2 start · 1320/1760/2093 Hz · three ascending";
+    this.tone(kind, (ok)=>this.logEvent("sync_tone", ok ? label : "SILENT — anchor missing, align on the neighbouring event"));
+  }
+
+  beginPart2(){
+    this.logEvent("part2_start", "transport interview ended · " + this.elapsedLabel() + " elapsed");
+    this.pendingAnchor = "part2start";
+    this.fireAnchor();
+    // The phone goes back to the participant here, so the controls close with it.
+    this.closeStrip();
+    // NOT a reset: the check-in continues the same WhatsApp thread, so the whole earlier
+    // conversation stays above it. Passing the initial flag here reseeded the thread and
+    // left the victim looking at nothing but their own "Help — snake!".
+    this.setState({ phase: 2, interstitial: false }, ()=>this.enter("symptom_alert", false));
+  }
+
+  // Collapsed by default so the participant cannot reach END or an export while holding
+  // the phone. A deliberate ~800ms press opens it; anything shorter is an accident.
+  holdStrip(){
+    this.holdT = setTimeout(()=>{ this.holdT = null; this.openStrip(); }, 800);
+  }
+  releaseStrip(){ if (this.holdT){ clearTimeout(this.holdT); this.holdT = null; } }
+
+  // Opening is deliberate; closing must not be. A single tap on the status area shuts it,
+  // and it shuts itself after 12s so the phone never goes back to the participant with
+  // END and the exports exposed.
+  openStrip(){
+    if (this.shutT) clearTimeout(this.shutT);
+    this.shutT = setTimeout(()=>{ this.shutT = null; this.setState({ stripOpen: false }); }, 12000);
+    this.setState({ stripOpen: true });
+  }
+  closeStrip(){
+    if (this.shutT){ clearTimeout(this.shutT); this.shutT = null; }
+    this.setState({ stripOpen: false });
+  }
+
+  // save=true exports the log from the same tap that ended the session.
+  endSession(save){
+    // The export waits for the closing tone's callback. The tone reports its real onset
+    // ~20 ms after the tap, and that row IS the fourth alignment anchor — exporting
+    // synchronously wrote a file whose last row was session_end, with the closing anchor
+    // missing from the very file the header documents it in. Safari's user activation
+    // outlives 20 ms comfortably, so the download still counts as gesture-initiated.
+    let saved = false;
+    const saveOnce = ()=>{ if (save && !saved){ saved = true; this.exportLog(); } };
+    this.tone("end", (ok)=>{
+      this.logEvent("sync_tone", ok ? "end tone \u00b7 2093 \u2192 1760 \u2192 1320 Hz \u00b7 260 ms each \u00b7 closing anchor is the FIRST onset" : "SILENT \u2014 no closing anchor in the audio", true);
+      saveOnce();
+    });
+    this.logEvent("session_end", this.state.logCount + " events");
+    this.setState({ sessionEnded: true });
+    // Belt and braces: if the audio context never reports back, the session still saves.
+    // A file one row short beats no file at the end of a field session.
+    setTimeout(saveOnce, 700);
+  }
+
+  // Back to the start screen for the next participant. The finished log stays in local
+  // storage under its own session id, so an un-exported run is recoverable rather than
+  // overwritten \u2014 but the strip keeps the export live after END so it rarely comes to that.
+  newSession(){
+    this.eng = null; this.typeRowShown = false; this.photoBusy = false;
+    if (this.tick){ clearInterval(this.tick); this.tick = null; }
+    if (this.shutT){ clearTimeout(this.shutT); this.shutT = null; }
+    this.log = []; this.t0 = null;
+    if (this.state.photoUrl) URL.revokeObjectURL(this.state.photoUrl);
+    this.setState({ thread: [], turn: null, inputValue: "", intent: null, species: null, idMethod: null,
+      severity: null, tmin: 34, isVictim: null, hasLoc: false, hospital: "Swellendam Provincial Hospital",
+      checkSel: {}, seamA: false, seamB: false, keyStep: 0, keyAnswers: [], biteTime: null, symId: null,
+      swell: false, locSheet: null, meds: null, bitePhoto: false, checkedIn: false, photoUrl: null,
+      snakeUrl: null, limbUrl: null, symTime: null, coords: null, pid: "", sessionId: null, logCount: 0, sessionEnded: false });
+  }
+
+  // ---------- device hand-offs (testkit only) ----------
+  // The bot cannot open a camera; the client does. A hidden file input is the honest
+  // equivalent: the OS camera app takes the picture and hands back a File, exactly as
+  // WhatsApp hands the bot an inbound media message.
+  capture(useCamera, then){
+    const el = useCamera ? this.camRef.current : this.libRef.current;
+    if (!el){ then(); return; }
+    this.pendingCapture = then;
+    el.value = "";
+    el.click();
+  }
+  filePicked(e){
+    const f = e.target.files && e.target.files[0], then = this.pendingCapture;
+    this.pendingCapture = null;
+    if (!f){ this.logEvent("capture_cancelled",""); return; }   // the turn stays open
+    this.logEvent("photo_captured", Math.round(f.size/1024) + " kB");
+    this.setState({ photoUrl: URL.createObjectURL(f) }, ()=>{ if (then) then(); });
+  }
+
+  // Real fix from the handset. Distances downstream are computed from it.
+  sendCurrentLoc(msg, action){
+    if (!navigator.geolocation){ this.pick(msg, action); return; }
+    this.setState(s=>({ thread: s.thread.concat([{ t:"note", text:"Waiting for GPS\u2026" }]) }));
+    const clearWait = s => s.thread.filter(x => !(x.t==="note" && x.text.indexOf("Waiting for GPS") === 0));
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        const c = { lat:p.coords.latitude, lng:p.coords.longitude, acc:Math.round(p.coords.accuracy) };
+        this.logEvent("gps_fix", c.lat.toFixed(5)+" "+c.lng.toFixed(5)+" \u00b1"+c.acc+"m");
+        this.setState(s=>({ coords:c, thread:clearWait(s) }), ()=>{
+          this.pick(msg, Object.assign({}, action, { echo:null }));
+          this.setState(s=>({ thread: s.thread.concat([{ t:"userloc",
+            label:"Current location \u00b7 "+c.lat.toFixed(4)+", "+c.lng.toFixed(4)+" \u00b7 \u00b1"+c.acc+" m" }]) }));
+        });
+      },
+      () => this.setState(s=>({ thread: (this.logEvent("gps_failed",""), clearWait(s)).concat([{ t:"note",
+        text:"GPS unavailable \u2014 falling back to the scripted Swellendam location." }]) }), ()=>this.pick(msg, action)),
+      { enableHighAccuracy:true, timeout:12000, maximumAge:0 }
+    );
+  }
+
+  static hav(a,b){
+    const R=6371, rad=Math.PI/180;
+    const dLat=(b.lat-a.lat)*rad, dLng=(b.lng-a.lng)*rad;
+    const h=Math.sin(dLat/2)**2 + Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLng/2)**2;
+    return 2*R*Math.asin(Math.sqrt(h));
+  }
+  // Straight-line distance from the real fix; the scripted figure when there is none.
+  km(key, fallback){
+    const c=this.state.coords, f=FACILITIES[key];
+    if (!c || !f) return fallback;
+    const d=Component.hav(c,f);
+    return (d<10 ? d.toFixed(1) : Math.round(d))+" km";
+  }
+  eta(key, fallback){
+    const c=this.state.coords, f=FACILITIES[key];
+    if (!c || !f) return fallback;
+    return "~"+Math.max(3, Math.round(Component.hav(c,f)/45*60))+" min";
+  }
+  mapsUrl(key){
+    const f=FACILITIES[key], c=this.state.coords;
+    return "https://www.google.com/maps/dir/?api=1&destination="+f.lat+","+f.lng
+      + (c ? "&origin="+c.lat+","+c.lng : "") + "&travelmode=driving";
+  }
+  componentDidMount(){ /* the flow starts on Start, not on load */
+    this.tick = setInterval(()=>{ if (this.state.sessionId && !this.state.sessionEnded) this.forceUpdate(); }, 1000);
+    // If the tab was reclaimed mid-session, the log is still on the phone. Offer to carry
+    // on against the ORIGINAL t0 so the recording stays aligned to one anchor.
+    try {
+      const sid = localStorage.getItem("snakeiq_tk_last");
+      if (sid){
+        const saved = JSON.parse(localStorage.getItem("snakeiq_tk_log_" + sid) || "null");
+        if (saved && saved.rows && saved.rows.length) this.setState({ resumable: saved });
+      }
+    } catch(e){}
+  }
+
+  resumeSession(){
+    const r = this.state.resumable;
+    if (!r) return;
+    this.log = r.rows;
+    this.t0 = r.started;
+    if (!this.visBound){
+      this.visBound = true;
+      document.addEventListener("visibilitychange", ()=>this.fireAnchor());
+    }
+    this.setState({ pid:r.pid, sessionId:r.sid, phase:r.phase || 1, sessionEnded:false,
+      logCount:r.rows.length, toned:true, interstitial:false, stripOpen:false, resumable:null }, ()=>{
+      this.logEvent("session_resumed", "picked up after " + this.elapsedLabel() + " \u2014 same clock, same anchor");
+      this.enter((r.phase || 1) === 2 ? "symptom_alert" : "welcome", true);
+    });
+  }
+  componentWillUnmount(){ clearInterval(this.tick); }
   componentDidUpdate(){
     const el = document.getElementById("wa-scroll");
     if (!el) return;
@@ -235,7 +789,6 @@ class Component extends DCLogic {
 
   // ---------- palette ----------
   static ALERT_BODY = "*Symptom check*\n\nCan you answer a few questions about your snake bite symptoms?";
-  static PROTO_NOTE = "Elapsed time = species symptom check interval. If victim is waiting for transportation or en route, this might be a good time to collect missing information.";
   // South Africa writes and speaks the 24-hour clock, so every clock time in the flow is
   // 24-hour. The victim may still TYPE am/pm — parseTime accepts either.
   static fmt24(mins){ const H = Math.floor(mins/60), M = mins%60;
@@ -274,6 +827,7 @@ class Component extends DCLogic {
 
   // ---------- flow entry ----------
   enter(id, initial){
+    this.logEvent("turn", id);
     const built = this.buildState(id);
     this.setState(s => {
       let thread = initial ? [
@@ -290,23 +844,8 @@ class Component extends DCLogic {
     // out-of-session symptom alert fires after hospital directions
     if (id === "idkey") this.setState({ seamA: true });
     if (id === "species_results") this.setState({ seamB: true });
-    if (id === "hospital_directions") setTimeout(()=>this.enter("symptom_alert"), 1400);
-  }
-
-  // Device hand-off: the OS camera app takes the picture and hands back a File, exactly
-  // as WhatsApp hands the bot an inbound media message.
-  capture(useCamera, then){
-    const el = useCamera ? this.camRef.current : this.libRef.current;
-    if (!el){ then(); return; }
-    this.pendingCapture = then;
-    el.value = "";
-    el.click();
-  }
-  filePicked(e){
-    const f = e.target.files && e.target.files[0], then = this.pendingCapture;
-    this.pendingCapture = null;
-    if (!f) return;   // cancelled out of the camera: the turn stays open
-    this.setState({ photoUrl: URL.createObjectURL(f) }, ()=>{ if (then) then(); });
+    // No auto-advance to the symptom check any more: part 1 ends when the participant
+    // opens Maps, and the researcher starts part 2 by hand after the transport interview.
   }
 
   pick(msg, action){
@@ -317,6 +856,7 @@ class Component extends DCLogic {
         ()=>this.pick(msg, Object.assign({}, action, { captured:true })));
       return;
     }
+    this.logEvent("tap", action.title);
     // freeze the tapped interactive
     this.setState(s => {
       const thread = s.thread.map(m => m === msg ? { ...m, done:true, picked: action.title } : m);
@@ -327,7 +867,16 @@ class Component extends DCLogic {
       if (echo) thread.push({ t:"user", text: echo });
       return { thread, tmin: Math.min(59, s.tmin) };
     });
-    if (action.url || action.next === "__none") return;
+    if (action.url){
+      // Tapping "Open in Google Maps" IS the end of part 1 — the participant has committed
+      // to travelling, and that intent is the finding. We do NOT hand off to Maps: iOS
+      // reclaims a backgrounded tab, which loses the live session and silences the anchor
+      // tone. The researcher can open Maps on their own phone if they want to watch it.
+      if (action.partBreak && this.state.phase === 1){ this.endPart1(); return; }
+      if (action.href) window.open(action.href, "_blank", "noopener");
+      return;
+    }
+    if (action.next === "__none") return;
     // special sequences
     if (action.next === "__limbphoto"){
       this.setState(s=>({ bitePhoto:true, limbUrl:s.photoUrl }));
@@ -515,11 +1064,6 @@ class Component extends DCLogic {
     setTimeout(()=>this.setState(s=>({ thread: s.thread.concat([{ t:"bot", text:"Tap one of the buttons above so I can help you fastest." }]) })), 300);
   }
 
-  // Time entry, per spec: the prompt is in the locale's own format (South Africa writes
-  // 24-hour), but either notation is accepted. A bare 1–11 with no am/pm has two readings;
-  // when BOTH of them are in the past the bot asks which one rather than guessing, because
-  // a twelve-hour error in time-since-bite changes the clinical picture.
-  // Returns { min } when certain, { ambiguous:[a,b] } when not, null when unparseable.
   // Confidence shown on the record is the same number the reporter saw: the photo-match
   // score, or the module's own confidence when the species came from the key.
   matchPct(){
@@ -537,6 +1081,11 @@ class Component extends DCLogic {
     return null;
   }
 
+  // Time entry, per spec: the prompt is in the locale's own format (South Africa writes
+  // 24-hour), but either notation is accepted. A bare 1–11 with no am/pm has two readings;
+  // when BOTH of them are in the past the bot asks which one rather than guessing, because
+  // a twelve-hour error in time-since-bite changes the clinical picture.
+  // Returns { min } when certain, { ambiguous:[a,b] } when not, null when unparseable.
   parseClock(v){
     const m2 = String(v).toLowerCase().match(/(\d{1,2})\s*[:.h]?\s*(\d{2})?\s*(am|pm|a\.m\.|p\.m\.)?/);
     if (!m2) return null;
@@ -783,22 +1332,22 @@ class Component extends DCLogic {
       case "hospital_eye": return {
         msgs: [{ t:"bot", text:"Nearest facilities that can treat a venom eye injury. Keep irrigating the eye while you travel." }],
         iact: { t:"iact", kind:"list", data:{ map:true, button:"Choose facility", rows:[
-          { title:"Swellendam Provincial Hospital", desc:"Govt Hospital \u00b7 18 Drostdy Street \u00b7 3 km", next:"eye_directions", echo:"Swellendam Provincial Hospital" },
-          { title:"Mediclinic Worcester", desc:"Private hospital \u00b7 128 km \u00b7 Ophthalmologist on call", next:"eye_directions", echo:"Mediclinic Worcester" }
+          { title:"Swellendam Provincial Hospital", desc:"Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km"), next:"eye_directions", echo:"Swellendam Provincial Hospital" },
+          { title:"Mediclinic Worcester", desc:"Private hospital \u00b7 "+this.km("worcester","128 km")+" \u00b7 Ophthalmologist on call", next:"eye_directions", echo:"Mediclinic Worcester" }
         ]}},
         turn: { title:"Eye-care facility (list-picker)", payloads:[ this.list("snakeiq_hospital_eye",
           "Nearest facilities that can treat a venom eye injury. Keep irrigating the eye while you travel.", "Choose facility",
-          [["Swellendam Provincial Hospital","Govt Hospital \u00b7 18 Drostdy Street \u00b7 3 km","eye_swellendam_prov"],
-           ["Mediclinic Worcester","Private hospital \u00b7 128 km \u00b7 Ophthalmologist on call","eye_mediclinic"]],
+          [["Swellendam Provincial Hospital","Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km"),"eye_swellendam_prov"],
+           ["Mediclinic Worcester","Private hospital \u00b7 "+this.km("worcester","128 km")+" \u00b7 Ophthalmologist on call","eye_mediclinic"]],
           true) ] }
       };
 
       case "eye_directions": return {
         msgs: [],
-        iact: { t:"iact", kind:"card", data:{ map:true, title:"Swellendam Provincial Hospital", body:"18 Drostdy Street, Swellendam\n3 km \u00b7 ~6 min by car\nEye casualty on site \u2014 no antivenom required.", tag:null },
-          actions:[{ title:"Open in Google Maps", url:true, echo:null, next:"__none" }] },
+        iact: { t:"iact", kind:"card", data:{ map:true, title:"Swellendam Provincial Hospital", body:"18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nEye casualty on site \u2014 no antivenom required.", tag:null },
+          actions:[{ title:"Open in Google Maps", url:true, href:this.mapsUrl("swellendam"), echo:null, next:"__none" }] },
         turn: { title:"Eye-care directions card", payloads:[ this.cardUrl("snakeiq_directions_eye", "Swellendam Provincial Hospital",
-          "18 Drostdy Street, Swellendam\n3 km \u00b7 ~6 min by car\nEye casualty on site \u2014 no antivenom required.", [["Open in Google Maps","https://maps.google.com/?q=Swellendam+Provincial+Hospital","URL"]]) ] }
+          "18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nEye casualty on site \u2014 no antivenom required.", [["Open in Google Maps",this.mapsUrl("swellendam"),"URL"]]) ] }
       };
 
       case "id_prompt": {
@@ -994,13 +1543,13 @@ class Component extends DCLogic {
         return {
         msgs: [{ t:"bot", text:hbody }],
         iact: { t:"iact", kind:"list", data:{ map:true, button:"Choose hospital", rows:[
-          { title:"Swellendam Provincial Hospital", desc:"Govt Hospital \u00b7 18 Drostdy Street \u00b7 3 km \u00b7 " + (av || "Antivenom") + " in stock", next:"hospital_directions", echo:"Swellendam Provincial Hospital" },
-          { title:"Otto du Plessis Hospital", desc:"Govt Hospital \u00b7 Bredasdorp \u00b7 72 km \u00b7 Limited stock", next:"hospital_directions", echo:"Otto du Plessis Hospital" }
+          { title:"Swellendam Provincial Hospital", desc:"Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km")+" \u00b7 " + (av || "Antivenom") + " in stock", next:"hospital_directions", echo:"Swellendam Provincial Hospital" },
+          { title:"Otto du Plessis Hospital", desc:"Govt Hospital \u00b7 Bredasdorp \u00b7 "+this.km("otto","72 km")+" \u00b7 Limited stock", next:"hospital_directions", echo:"Otto du Plessis Hospital" }
         ]}},
         turn: { title:"Hospital selection (list-picker)", payloads:[ this.list("snakeiq_hospital",
           hbody, "Choose hospital",
-          [["Swellendam Provincial Hospital","Govt Hospital \u00b7 18 Drostdy Street \u00b7 3 km \u00b7 " + (av || "Antivenom") + " in stock","hosp_swellendam_prov"],
-           ["Otto du Plessis Hospital","Govt Hospital \u00b7 Bredasdorp \u00b7 72 km \u00b7 Limited stock","hosp_ottoduplessis"]],
+          [["Swellendam Provincial Hospital","Govt Hospital \u00b7 18 Drostdy Street \u00b7 "+this.km("swellendam","3 km")+" \u00b7 " + (av || "Antivenom") + " in stock","hosp_swellendam_prov"],
+           ["Otto du Plessis Hospital","Govt Hospital \u00b7 Bredasdorp \u00b7 "+this.km("otto","72 km")+" \u00b7 Limited stock","hosp_ottoduplessis"]],
           true, false,
           av ? "Antivenom product comes from Seam B (antivenom.product) \u2014 Design names it but never decides it. Stock figures are facility data (Seam C, not built)." : undefined) ] }
       };
@@ -1008,10 +1557,10 @@ class Component extends DCLogic {
 
       case "hospital_directions": return {
         msgs: [],
-        iact: { t:"iact", kind:"card", data:{ map:true, title:"Swellendam Provincial Hospital", body:"18 Drostdy Street, Swellendam\n3 km \u00b7 ~6 min by car\nAntivenom confirmed in stock.", tag:null },
-          actions:[{ title:"Open in Google Maps", url:true, echo:null, next:"__none" }] },
+        iact: { t:"iact", kind:"card", data:{ map:true, title:"Swellendam Provincial Hospital", body:"18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nAntivenom confirmed in stock.", tag:null },
+          actions:[{ title:"Open in Google Maps", url:true, partBreak:true, href:this.mapsUrl("swellendam"), echo:null, next:"__none" }] },
         turn: { title:"Directions card", payloads:[ this.cardUrl("snakeiq_directions", "Swellendam Provincial Hospital",
-          "18 Drostdy Street, Swellendam\n3 km \u00b7 ~6 min by car\nAntivenom confirmed in stock.", [["Open in Google Maps","https://maps.google.com/?q=Swellendam+Provincial+Hospital","URL"]]) ] }
+          "18 Drostdy Street, Swellendam\n"+this.km("swellendam","3 km")+" \u00b7 "+this.eta("swellendam","~6 min")+" by car\nAntivenom confirmed in stock.", [["Open in Google Maps",this.mapsUrl("swellendam"),"URL"]]) ] }
       };
 
       // ---------- non-venomous bite: syndromic screen decides hospital vs wound care ----------
@@ -1094,7 +1643,11 @@ class Component extends DCLogic {
       };
 
       case "symptom_alert": return {
-        msgs: [{ t:"pnote", text: Component.PROTO_NOTE }],
+        // The victim comes back to the SAME thread — one conversation per number, so the
+        // check-in lands under everything already said, and the immobilisation advice and
+        // hospital name are still there to scroll back to. WhatsApp marks the return with
+        // its unread divider; nothing is cleared or restarted.
+        msgs: [{ t:"unread" }],
         iact: { t:"iact", kind:"qr", data:{ oos:true }, actions:[
           { title:"OK", next:"bite_time" },
           { title:"Not now", next:"sc_dismissed" }
@@ -1137,14 +1690,14 @@ class Component extends DCLogic {
       case "sc_hosp_list": return {
         msgs: [{ t:"bot", text:"Which one?" }],
         iact: { t:"iact", kind:"list", data:{ map:true, button:"Choose hospital", rows:[
-          { title:"Swellendam Provincial Hospital", desc:"3 km \u00b7 142 vials \u00b7 +27 28 514 1141", hospital:"Swellendam Provincial Hospital", next:"sc_who", echo:"Swellendam Provincial Hospital" },
-          { title:"Otto du Plessis Hospital", desc:"72 km \u00b7 24 vials \u00b7 +27 28 425 1140", hospital:"Otto du Plessis Hospital", next:"sc_who", echo:"Otto du Plessis Hospital" },
+          { title:"Swellendam Provincial Hospital", desc:""+this.km("swellendam","3 km")+" \u00b7 142 vials \u00b7 +27 28 514 1141", hospital:"Swellendam Provincial Hospital", next:"sc_who", echo:"Swellendam Provincial Hospital" },
+          { title:"Otto du Plessis Hospital", desc:""+this.km("otto","72 km")+" \u00b7 24 vials \u00b7 +27 28 425 1140", hospital:"Otto du Plessis Hospital", next:"sc_who", echo:"Otto du Plessis Hospital" },
           { title:"A different hospital", desc:"Type the name of the facility", next:"sc_hosp_custom", echo:"A different hospital" }
         ]}},
         turn: { title:"S-3b Hospital list \u00b7 currentStep 10.5", payloads:[ this.list("snakeiq_sc_hospital",
           "Which one?", "Choose hospital",
-          [["Swellendam Provincial Hospital","3 km \u00b7 142 vials \u00b7 +27 28 514 1141","sc_hosp_swellendam_prov"],
-           ["Otto du Plessis Hospital","72 km \u00b7 24 vials \u00b7 +27 28 425 1140","sc_hosp_ottoduplessis"],
+          [["Swellendam Provincial Hospital",""+this.km("swellendam","3 km")+" \u00b7 142 vials \u00b7 +27 28 514 1141","sc_hosp_swellendam_prov"],
+           ["Otto du Plessis Hospital",""+this.km("otto","72 km")+" \u00b7 24 vials \u00b7 +27 28 425 1140","sc_hosp_ottoduplessis"],
            ["A different hospital","Type the name of the facility","sc_hosp_other"]],
           true) ] }
       };
@@ -1373,7 +1926,7 @@ class Component extends DCLogic {
         // Spreading swelling reported on the checklist counts as a yes here, whether or not
         // the swelling question was asked.
         const swelling = this.state.swell || this.spreadReported();
-        const msgs = swelling ? [{ t:"bot", head:"*Swelling check*", img:"assets/swelling-mark-illustration.png", text:markBody }, { t:"bot", text:photo }]
+        const msgs = swelling ? [{ t:"bot", head:"*Swelling check*", img:SWELL_IMG, text:markBody }, { t:"bot", text:photo }]
                               : [{ t:"bot", text:photo }];
         const payloads = [ this.qr("snakeiq_sc_bite_photo", photo,
           [["Take a photo","sc_photo_new"],["Use existing photo","sc_photo_lib"],["No photo","sc_photo_skip"]], "IS","\u2014") ];
@@ -1420,7 +1973,7 @@ class Component extends DCLogic {
         ];
         return {
           msgs: [],
-          iact: { t:"iact", kind:"list", data:{ map:false, button:"Menu", menuTop:true, rows }},
+          iact: { t:"iact", kind:"list", data:{ map:false, button:"Menu", menuTop:true, endTest:true, rows }},
           turn: { title:"T-1 Terminal card \u00b7 currentStep 14", payloads:[ this.list("snakeiq_sc_terminal",
             "Nothing else is needed from you. The menu stays open if you need it.", "Menu",
             rows.map(r=>[r.title, r.desc, "sc_"+r.next]), false, false,
@@ -1458,13 +2011,15 @@ class Component extends DCLogic {
         rows.push(["Estimated time of bite", S.biteTime
           ? S.biteTime.label+" \u00b7 "+Component.dur(S.biteTime.minutesBeforeChat)+" before chat started"
           : "Not recorded"]);
-        rows.push(["Location", S.hasLoc ? "Swellendam, Western Cape \u00b7 \u201334.0221, 20.4406" : "Not shared"]);
+        rows.push(["Location", !S.hasLoc ? "Not shared"
+          : S.coords ? S.coords.lat.toFixed(4)+", "+S.coords.lng.toFixed(4)+" \u00b7 \u00b1"+S.coords.acc+" m"
+          : "Swellendam, Western Cape \u00b7 \u201334.0221, 20.4406"]);
         rows.push(["Symptoms", (sym.length ? sym.join(", ") : "None reported")
           + (S.symTime ? " \u00b7 recorded "+S.symTime : "")]);
         rows.push(["Swelling", S.swell ? "Increased since last check" : "No increase reported"]);
         if (S.bitePhoto) rows.push(["Limb photo", S.swell ? "Attached \u00b7 swelling line marked" : "Attached", S.limbUrl || null]);
         rows.push(["Medications taken", S.meds || "None reported"]);
-        rows.push(["Sent to", S.hospital+" \u00b7 3 km \u00b7 142 vials"]);
+        rows.push(["Sent to", S.hospital+" \u00b7 "+this.km(S.hospital==="Otto du Plessis Hospital"?"otto":"swellendam","3 km")+" \u00b7 142 vials"]);
         const body = rows.map(r=>"*"+r[0]+":* "+r[1]).join("\n");
         return {
           msgs: [],
@@ -1617,6 +2172,25 @@ class Component extends DCLogic {
   // ---------- rendering ----------
   renderVals(){
     const thread = this.state.thread.map((m,i)=>this.renderMsg(m,i));
+    // The participant's task is over at the terminal card; the researcher closes the
+    // session from the same screen rather than reaching for the hidden strip.
+    const last = this.state.thread[this.state.thread.length - 1];
+    if (last && last.t === "iact" && last.data && last.data.endTest && this.state.sessionId){
+      const h = React.createElement;
+      thread.push(this.state.sessionEnded
+        ? h("div",{ key:"endtest", style:{ margin:"38px 0 10px", textAlign:"center", fontFamily:"'Roboto Mono',monospace", fontSize:11, letterSpacing:".06em", color:"#6b7a82" } },
+            "SESSION ENDED \u00b7 TSV SAVED \u00b7 LABELS FROM THE BAR BELOW")
+        : h("div",{ key:"endtest", style:{ margin:"38px 0 10px", display:"flex", flexDirection:"column", alignItems:"center", gap:8 } },
+            // One tap: closing anchor, session_end row, and the TSV download. Saving from
+            // the same tap matters — iOS drops a programmatic download that is not tied to
+            // a user gesture, which is how a finished session could end up unexported.
+            h("button",{ onClick:()=>this.endSession(true),
+              style:{ minHeight:52, padding:"0 30px", border:"none", borderRadius:8, background:"#C94B30", color:"#fff",
+                font:"600 16px/1.2 Barlow,sans-serif", letterSpacing:".03em", cursor:"pointer", boxShadow:"0 2px 8px rgba(0,0,0,.18)" } },
+              "END & SAVE FILE"),
+            h("div",{ style:{ fontFamily:"'Roboto Mono',monospace", fontSize:10, letterSpacing:".05em", color:"#6b7a82", textAlign:"center" } },
+              "Saves to Files \u203a Downloads \u00b7 LABELS from the bar below")));
+    }
     return {
       thread,
       inspectorBody: this.renderInspector(),
@@ -1637,6 +2211,37 @@ class Component extends DCLogic {
       onKey: (e)=>{ if (e.key === "Enter") this.sendTyped(); },
       onSend: ()=>this.sendTyped(),
       onPlus: ()=>this.attachPhoto(),
+      pid: this.state.pid,
+      sessionPending: !this.state.sessionId,
+      sessionStarted: !!this.state.sessionId,
+      sessionActionLabel: this.state.sessionEnded ? "NEW" : "END",
+      logDot: this.state.sessionEnded ? "rgba(238,233,224,.34)" : "#C94B30",
+      sessionFootnote: this.state.sessionId
+        ? "Session " + this.state.sessionId
+        : "Stays on this phone. Export before closing the tab — TSV plus an Audacity label track.",
+      logStatus: this.state.pid + " \u00b7 PART " + (this.state.phase || 1) + " \u00b7 "
+        + this.state.logCount + " events \u00b7 "
+        + (this.state.sessionEnded ? "ended \u2014 export both files" : this.elapsedLabel()),
+      onPid: (e)=>this.setState({ pid: e.target.value }),
+      onPidKey: (e)=>{ if (e.key === "Enter") this.startSession(); },
+      onStartSession: ()=>this.startSession(),
+      onResume: ()=>this.resumeSession(),
+      canResume: !!this.state.resumable,
+      resumeLabel: this.state.resumable
+        ? "Resume " + this.state.resumable.pid + " \u00b7 " + this.state.resumable.rows.length + " events \u00b7 no new beep"
+        : "",
+      onTestTone: ()=>this.tone("start", ()=>{}),
+      onExportLog: ()=>this.exportLog(),
+      onExportLabels: ()=>this.exportLabels(),
+      onBeginPart2: ()=>this.beginPart2(),
+      onStripHold: ()=>this.holdStrip(),
+      onStripRelease: ()=>this.releaseStrip(),
+      onStripClose: ()=>this.closeStrip(),
+      interstitial: !!this.state.interstitial,
+      interviewClock: this.elapsedLabel(),
+      stripOpen: !!this.state.stripOpen || !!this.state.sessionEnded,
+      stripClosed: !(this.state.stripOpen || this.state.sessionEnded),
+      onSessionAction: ()=>{ if (this.state.sessionEnded) this.newSession(); else this.endSession(); },
       camRef: this.camRef,
       libRef: this.libRef,
       onFilePicked: (e)=>this.filePicked(e),
@@ -1648,7 +2253,8 @@ class Component extends DCLogic {
       onSendPlace3: ()=>this.sendLoc("N2 towards Riversdale"),
       resetFlow: ()=>{ this.setState({ thread:[], turn:null, intent:null, species:null, idMethod:null, severity:null, inputValue:"",
         isVictim:true, hospital:"Swellendam Provincial Hospital", hasNeuro:false, selectedSymptoms:[], checkSel:{}, hasLoc:false,
-        seamA:false, seamB:false, keyStep:0, keyAnswers:[], biteTime:null, symId:null, symTime:null, swell:false, locSheet:null, meds:null, bitePhoto:false, checkedIn:false, photoUrl:null, snakeUrl:null, limbUrl:null }, ()=>{ this.eng = null; this.typeRowShown = false; this.photoBusy = false; this.fa1Shown = false; this.enter("welcome", true); }); }
+        seamA:false, seamB:false, keyStep:0, keyAnswers:[], biteTime:null, symId:null, symTime:null, swell:false, locSheet:null, meds:null, bitePhoto:false, checkedIn:false,
+        photoUrl:null, snakeUrl:null, limbUrl:null, coords:this.state.coords }, ()=>{ this.eng = null; this.typeRowShown = false; this.photoBusy = false; this.fa1Shown = false; this.enter("welcome", true); }); }
     };
   }
 
@@ -1679,6 +2285,10 @@ class Component extends DCLogic {
     if (m.t === "sys") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"6px 0 10px" } },
       h("div",{ style:{ background:"#fdf4c9", color:"#54656f", fontSize:11.5, lineHeight:"16px", textAlign:"center", padding:"7px 12px", borderRadius:8, maxWidth:"85%", boxShadow:"0 1px .5px rgba(0,0,0,.1)" } }, this.t(m.text)));
 
+    if (m.t === "unread") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"16px 0 10px" } },
+      h("div",{ style:{ width:"100%", background:"#e2f0d6", color:"#54656f", fontSize:10.5, fontWeight:700, letterSpacing:".08em", textAlign:"center", padding:"6px 12px" } },
+        this.state.lang === "af" ? "1 ONGELESE BOODSKAP" : "1 UNREAD MESSAGE"));
+
     if (m.t === "day") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"center", margin:"4px 0 10px" } },
       h("div",{ style:{ background:"#e2f0d6", color:"#54656f", fontSize:11.5, fontWeight:600, padding:"5px 12px", borderRadius:8, letterSpacing:".04em" } }, "TODAY"));
 
@@ -1701,8 +2311,8 @@ class Component extends DCLogic {
 
     if (m.t === "userphoto") return h("div",{ key:i, style:{ ...anim, display:"flex", justifyContent:"flex-end", marginBottom:8 } },
       h("div",{ style:{ maxWidth:"66%", background:C.outBg, padding:3, borderRadius:8, borderTopRightRadius:2, boxShadow:"0 1px .5px rgba(0,0,0,.13)", position:"relative" } },
-        (m.src || (m.kind === "limb" ? null : "assets/snake-photo-wide.jpg"))
-          ? h("img",{ src: m.src || "assets/snake-photo-wide.jpg", style:{ width:"100%", display:"block", borderRadius:6, aspectRatio:"4/3", objectFit:"cover" } })
+        (m.src || (m.kind === "limb" ? null : SNAKE_PHOTO))
+          ? h("img",{ src: m.src || SNAKE_PHOTO, style:{ width:"100%", display:"block", borderRadius:6, aspectRatio:"4/3", objectFit:"cover" } })
           : h("div",{ style:{ width:"220px", maxWidth:"100%", aspectRatio:"4/3", borderRadius:6, background:"#C9C4BC", display:"flex", alignItems:"center", justifyContent:"center", color:"#11344F", fontSize:11, fontWeight:600, letterSpacing:".06em" } }, "PHOTO OF BITTEN LIMB"),
         h("span",{ style:{ position:"absolute", right:9, bottom:7, fontSize:11, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.6)", display:"inline-flex", gap:3, alignItems:"center" } }, this.clock())));
 
@@ -1727,7 +2337,7 @@ class Component extends DCLogic {
 
   mapThumb(h,w){
     const H = React.createElement;
-    return H("div",{ style:{ position:"relative", width:"100%", height:h||120, background:"#e8e3d9", backgroundImage:"url('assets/maps/swellendam.png')", backgroundSize:"cover", backgroundPosition:"center", overflow:"hidden" } },
+    return H("div",{ style:{ position:"relative", width:"100%", height:h||120, background:"#e8e3d9", backgroundImage:"url("+JSON.stringify(MAP_IMG)+")", backgroundSize:"cover", backgroundPosition:"center", overflow:"hidden" } },
       
       
       H("div",{ style:{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-90%)" } }, this.pinSvg(30, Component.C.verm)));
@@ -1762,7 +2372,7 @@ class Component extends DCLogic {
           this.mapThumb(96),
           h("div",{ style:{ opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
             m.actions.map((a,k)=> h("div",{ key:k, style:{ borderTop:"1px solid #eef0f1" } },
-              this.waBtn(this.t(a.title), a.title === "Pick a different spot" ? ()=>this.openLocSheet(m,a) : ()=>this.pick(m,a), this.pinSvg(17,C.green)))))
+              this.waBtn(this.t(a.title), a.title === "Pick a different spot" ? ()=>this.openLocSheet(m,a) : ()=>this.sendCurrentLoc(m,a), this.pinSvg(17,C.green)))))
         ]));
     }
 
@@ -1867,7 +2477,7 @@ class Component extends DCLogic {
           sym: worst || (labels.length ? undefined : "sym_none"),
           symptoms: labels });
       };
-      const plainRow = (key, label, sub)=> h("div",{ key:key, onClick:()=>toggle(key),
+      const plainRow = (key, label, sub)=> h("div",{ key:key, className:"wa-row", onClick:()=>toggle(key),
         style:{ display:"flex", alignItems:"center", gap:8, padding:"9px 11px", borderRadius:8, cursor:"pointer", marginTop:5,
           border:"1px solid "+(sel[key] ? C.teal : "#d9d9d9"), background: sel[key] ? "rgba(68,118,135,.10)" : "#fff",
           color: sel[key] ? C.teal : C.navy, fontSize:13, fontWeight:sel[key]?600:500 } },
@@ -1883,7 +2493,7 @@ class Component extends DCLogic {
             (d.groups || [{ label:null, opts:d.opts }]).map((g,gi)=> h("div",{ key:gi, style:{ marginBottom:10 } },
               g.label ? h("div",{ style:{ fontSize:10, fontWeight:700, letterSpacing:".06em", color:C.teal, margin:"2px 0 7px" } }, this.t(g.label)) : null,
               h("div",{ style:{ display:"flex", flexDirection:"column", gap:5 } },
-              g.opts.map((o)=> { const k = d.opts.indexOf(o); return h("div",{ key:k, onClick:()=>toggle(k),
+              g.opts.map((o)=> { const k = d.opts.indexOf(o); return h("div",{ key:k, className:"wa-row", onClick:()=>toggle(k),
                 style:{ display:"flex", alignItems:"center", gap:8, padding:"9px 11px", borderRadius:8, cursor:"pointer",
                   border:"1px solid "+(sel[k] ? C.teal : "#d9d9d9"),
                   background: sel[k] ? "rgba(68,118,135,.10)" : "#fff",
@@ -1895,7 +2505,7 @@ class Component extends DCLogic {
             d.other ? plainRow("__other", this.t(d.other), "type below") : null,
             d.none === null ? null : plainRow("__none", this.t(d.none || "None of the above"))),
           h("div",{ style:{ display:"flex", borderTop:"1px solid #eef0f1", opacity:done?.6:1, pointerEvents:done?"none":"auto" } },
-            h("div",{ onClick:submit, style:{ flex:1, textAlign:"center", padding:"11px 8px", color:C.green, fontSize:13.5, fontWeight:600, cursor:"pointer" } }, this.t(d.button)))
+            h("div",{ className:"wa-btn", onClick:submit, style:{ flex:1, textAlign:"center", padding:"11px 8px", color:C.green, fontSize:13.5, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" } }, this.t(d.button)))
         ], "88%"));
     }
 
@@ -2145,8 +2755,8 @@ const IMMOB = {
 };
 
 // Species photography (repo: img/species) keyed by speciesId; generic wide shot covers the rest.
-const SP_PHOTOS = { mamba_black:1, cobra_mozam:1, grass_olive:1, mole:1, tiger_eastern:1 };
-const SP_IMG = (id) => SP_PHOTOS[id] ? ("assets/species/" + id + ".jpg") : "assets/snake-photo-wide.jpg";
+const SP_PHOTOS = { mamba_black: __R.sp_mambaBlack || "assets/species/mamba_black.jpg", cobra_mozam: __R.sp_cobraMozam || "assets/species/cobra_mozam.jpg", grass_olive: __R.sp_grassOlive || "assets/species/grass_olive.jpg", mole: __R.sp_mole || "assets/species/mole.jpg", tiger_eastern: __R.sp_tigerEastern || "assets/species/tiger_eastern.jpg" };
+const SP_IMG = (id) => SP_PHOTOS[id] || SNAKE_PHOTO;
 
 // Display adapter over the module's species record — presentation only.
 const SP = (id) => {
@@ -2158,6 +2768,15 @@ const SP = (id) => {
     interval: s.alertIntervalMin, immob: IMMOB[s.firstAid] || IMMOB.none,
     av: s.antivenom, tier: s.tier, care: s.careLevel };
 };
+
+/* Facility coordinates, so a real GPS fix produces a real distance instead of the
+   scripted one. Real Seam C data would carry these per facility. */
+const FACILITIES = {
+  swellendam:{ lat:-34.0234, lng:20.4411 },
+  otto:      { lat:-34.5321, lng:20.0403 },
+  worcester: { lat:-33.6465, lng:19.4485 }
+};
 </script>
+
 </body>
 </html>
